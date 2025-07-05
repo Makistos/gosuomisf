@@ -4,11 +4,11 @@ import "time"
 
 // User represents a user in the system
 type User struct {
-	ID       int    `json:"id" db:"id"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"-" db:"password"` // Password should not be serialized
-	Role     string `json:"role" db:"role"`
-	Email    string `json:"email" db:"email"`
+	ID        int       `json:"id" db:"id"`
+	Username  string    `json:"username" db:"username"`
+	Password  string    `json:"-" db:"password"` // Password should not be serialized
+	Role      string    `json:"role" db:"role"`
+	Email     string    `json:"email" db:"email"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -42,39 +42,39 @@ type RefreshRequest struct {
 
 // Work represents a literary work
 type Work struct {
-	ID                int       `json:"id" db:"id"`
-	Title             string    `json:"title" db:"title"`
-	Subtitle          *string   `json:"subtitle" db:"subtitle"`
-	OrigTitle         *string   `json:"orig_title" db:"orig_title"`
-	PubYear           *int      `json:"pubyear" db:"pubyear"`
-	LanguageID        *int      `json:"language_id" db:"language"`
-	Language          *string   `json:"language,omitempty"`
-	BookseriesID      *int      `json:"bookseries_id" db:"bookseries_id"`
-	BookseriesName    *string   `json:"bookseries_name,omitempty"`
-	BookseriesNum     *string   `json:"bookseriesnum" db:"bookseriesnum"`
-	BookseriesOrder   *int      `json:"bookseriesorder" db:"bookseriesorder"`
-	TypeID            *int      `json:"type_id" db:"type"`
-	Type              *string   `json:"type,omitempty"`
-	Misc              *string   `json:"misc" db:"misc"`
-	Description       *string   `json:"description" db:"description"`
-	DescrAttr         *string   `json:"descr_attr" db:"descr_attr"`
-	ImportedString    *string   `json:"imported_string" db:"imported_string"`
-	AuthorStr         *string   `json:"author_str" db:"author_str"`
+	ID              int     `json:"id" db:"id"`
+	Title           string  `json:"title" db:"title"`
+	Subtitle        *string `json:"subtitle" db:"subtitle"`
+	OrigTitle       *string `json:"orig_title" db:"orig_title"`
+	PubYear         *int    `json:"pubyear" db:"pubyear"`
+	LanguageID      *int    `json:"language_id" db:"language"`
+	Language        *string `json:"language,omitempty"`
+	BookseriesID    *int    `json:"bookseries_id" db:"bookseries_id"`
+	BookseriesName  *string `json:"bookseries_name,omitempty"`
+	BookseriesNum   *string `json:"bookseriesnum" db:"bookseriesnum"`
+	BookseriesOrder *int    `json:"bookseriesorder" db:"bookseriesorder"`
+	TypeID          *int    `json:"type_id" db:"type"`
+	Type            *string `json:"type,omitempty"`
+	Misc            *string `json:"misc" db:"misc"`
+	Description     *string `json:"description" db:"description"`
+	DescrAttr       *string `json:"descr_attr" db:"descr_attr"`
+	ImportedString  *string `json:"imported_string" db:"imported_string"`
+	AuthorStr       *string `json:"author_str" db:"author_str"`
 }
 
 // Person represents an author or other person
 type Person struct {
-	ID        int       `json:"id" db:"id"`
-	Name      string    `json:"name" db:"name"`
-	AltName   string    `json:"alt_name" db:"alt_name"`
-	FirstName string    `json:"first_name" db:"first_name"`
-	LastName  string    `json:"last_name" db:"last_name"`
-	DOB       time.Time `json:"dob" db:"dob"`
-	DOD       time.Time `json:"dod" db:"dod"`
-	Bio       string    `json:"bio" db:"bio"`
-	Nationality string  `json:"nationality" db:"nationality"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	ID          int       `json:"id" db:"id"`
+	Name        string    `json:"name" db:"name"`
+	AltName     string    `json:"alt_name" db:"alt_name"`
+	FirstName   string    `json:"first_name" db:"first_name"`
+	LastName    string    `json:"last_name" db:"last_name"`
+	DOB         time.Time `json:"dob" db:"dob"`
+	DOD         time.Time `json:"dod" db:"dod"`
+	Bio         string    `json:"bio" db:"bio"`
+	Nationality string    `json:"nationality" db:"nationality"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // Edition represents a published edition of a work
@@ -127,9 +127,9 @@ type Award struct {
 
 // FrontPageData represents data for the front page
 type FrontPageData struct {
-	TotalWorks   int `json:"total_works"`
-	TotalPeople  int `json:"total_people"`
-	TotalShorts  int `json:"total_shorts"`
+	TotalWorks    int `json:"total_works"`
+	TotalPeople   int `json:"total_people"`
+	TotalShorts   int `json:"total_shorts"`
 	TotalEditions int `json:"total_editions"`
 }
 

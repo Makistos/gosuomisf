@@ -6,12 +6,12 @@ import (
 )
 
 type Config struct {
-	Environment     string
-	DatabaseURL     string
-	JWTSecret       string
-	JWTExpiryHours  int
+	Environment        string
+	DatabaseURL        string
+	JWTSecret          string
+	JWTExpiryHours     int
 	RefreshExpiryHours int
-	Port            string
+	Port               string
 }
 
 func Load() *Config {
@@ -24,7 +24,7 @@ func Load() *Config {
 		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		JWTExpiryHours:     jwtExpiryHours,
 		RefreshExpiryHours: refreshExpiryHours,
-		Port:              getEnv("PORT", "8080"),
+		Port:               getEnv("PORT", "8080"),
 	}
 }
 
