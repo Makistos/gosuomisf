@@ -10,7 +10,7 @@ import (
 func TestLoad(t *testing.T) {
 	// Test loading config
 	cfg := Load()
-	
+
 	assert.NotNil(t, cfg)
 	assert.NotEmpty(t, cfg.JWTSecret)
 	assert.Greater(t, cfg.JWTExpiryHours, 0)
@@ -28,9 +28,9 @@ func TestLoadWithEnvironmentVars(t *testing.T) {
 		os.Unsetenv("PORT")
 		os.Unsetenv("DATABASE_URL")
 	}()
-	
+
 	cfg := Load()
-	
+
 	assert.Equal(t, "test-secret-123", cfg.JWTSecret)
 	assert.Equal(t, "9999", cfg.Port)
 	assert.Equal(t, "postgresql://test:test@localhost/test", cfg.DatabaseURL)
@@ -40,10 +40,10 @@ func TestLoadDefaults(t *testing.T) {
 	// Clear environment variables
 	originalSecret := os.Getenv("JWT_SECRET")
 	originalPort := os.Getenv("PORT")
-	
+
 	os.Unsetenv("JWT_SECRET")
 	os.Unsetenv("PORT")
-	
+
 	defer func() {
 		if originalSecret != "" {
 			os.Setenv("JWT_SECRET", originalSecret)
@@ -52,9 +52,9 @@ func TestLoadDefaults(t *testing.T) {
 			os.Setenv("PORT", originalPort)
 		}
 	}()
-	
+
 	cfg := Load()
-	
+
 	// Should have default values
 	assert.NotEmpty(t, cfg.JWTSecret) // Default random secret
 	assert.Equal(t, "8080", cfg.Port) // Default port
