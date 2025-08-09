@@ -26,10 +26,16 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		return
 	}
 
+	// Check if database connection is available
+	if h.db == nil || h.db.DB == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not available"})
+		return
+	}
+
 	offset := (query.Page - 1) * query.PageSize
 
-	baseQuery := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM tag t LEFT JOIN tagtype tt ON t.type_id = tt.id`
-	countQuery := `SELECT COUNT(*) FROM tag`
+	baseQuery := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM suomisf.tag t LEFT JOIN suomisf.tagtype tt ON t.type_id = tt.id`
+	countQuery := `SELECT COUNT(*) FROM suomisf.tag`
 
 	var args []interface{}
 	var whereClause string
@@ -121,11 +127,17 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 		return
 	}
 
+	// Check if database connection is available
+	if h.db == nil || h.db.DB == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not available"})
+		return
+	}
+
 	var tag models.Tag
 	var typeNull sql.NullString
 	var descNull sql.NullString
 
-	query := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM tag t LEFT JOIN tagtype tt ON t.type_id = tt.id WHERE t.id = $1`
+	query := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM suomisf.tag t LEFT JOIN suomisf.tagtype tt ON t.type_id = tt.id WHERE t.id = $1`
 	err = h.db.QueryRow(query, tagID).Scan(
 		&tag.ID, &tag.Name, &typeNull, &tag.TypeID, &descNull,
 	)
@@ -139,10 +151,6 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 	}
 	if descNull.Valid {
 		tag.Description = &descNull.String
-	}
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Tag not found"})
-		return
 	}
 
 	c.JSON(http.StatusOK, tag)
