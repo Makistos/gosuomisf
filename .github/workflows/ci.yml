@@ -35,12 +35,22 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ github.job }}
         restore-keys: |
+          ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-
           ${{ runner.os }}-go-
+      continue-on-error: true
+
+    - name: Clean Go module cache on failure
+      if: failure()
+      run: |
+        go clean -modcache || true
+        rm -rf ~/go/pkg/mod ~/.cache/go-build || true
 
     - name: Download dependencies
-      run: go mod download
+      run: |
+        go mod download
+        go mod verify
 
     - name: Wait for PostgreSQL
       run: |
@@ -87,6 +97,23 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ github.job }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-
+          ${{ runner.os }}-go-
+      continue-on-error: true
+
+    - name: Download dependencies
+      run: |
+        go mod download
+        go mod verify
 
     - name: Build application
       run: go build -v ./...
