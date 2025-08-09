@@ -141,14 +141,14 @@ func (h *UserHandler) GetUser(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
         return
     }
-    
+
     user, err := h.db.GetUserByID(userID)
     if err != nil {
         log.Printf("Error getting user %d: %v", userID, err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
         return
     }
-    
+
     c.JSON(http.StatusOK, user)
 }
 ```
@@ -183,7 +183,7 @@ func TestUserHandler_GetUser(t *testing.T) {
             expectedUser:   nil,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             // Test implementation

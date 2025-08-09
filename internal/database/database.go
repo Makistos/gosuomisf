@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 type DB struct {
@@ -12,7 +12,7 @@ type DB struct {
 }
 
 func Initialize(databaseURL string) (*DB, error) {
-	db, err := sql.Open("mysql", databaseURL)
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

@@ -20,7 +20,7 @@ func Load() *Config {
 
 	return &Config{
 		Environment:        getEnv("ENVIRONMENT", "development"),
-		DatabaseURL:        getEnv("DATABASE_URL", "postgresql://localhost/suomisf?sslmode=disable"),
+		DatabaseURL:        getEnv("DATABASE_URL", "postgresql://mep:password@127.0.0.1/suomisf?sslmode=disable"),
 		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		JWTExpiryHours:     jwtExpiryHours,
 		RefreshExpiryHours: refreshExpiryHours,

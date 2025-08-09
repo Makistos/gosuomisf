@@ -1,10 +1,10 @@
 # GoSuomiSF
 
-A modern REST API backend for the Finnish Science Fiction Bibliography (SuomiSF) built with Go, Gin, and MySQL. This is a Go rewrite of the original Python/Flask SuomiSF project.
+A modern REST API backend for the Finnish Science Fiction Bibliography (SuomiSF) built with Go, Gin, and PostgreSQL. This is a Go rewrite of the original Python/Flask SuomiSF project.
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Database](https://img.shields.io/badge/Database-MySQL-4479A1?style=flat&logo=mysql&logoColor=white)](https://mysql.com/)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org/)
 
 ## 🚀 Features
 
@@ -12,7 +12,7 @@ A modern REST API backend for the Finnish Science Fiction Bibliography (SuomiSF)
 - **📚 REST API**: Full CRUD operations for works, people, editions, short stories, and tags
 - **🔍 Search & Filter**: Advanced search capabilities with pagination and sorting
 - **🔗 Foreign Key Resolution**: Automatic resolution of foreign keys to human-readable values
-- **🗄️ Database**: MySQL with proper indexing and relationships
+- **🗄️ Database**: PostgreSQL with proper indexing and relationships
 - **📄 Pagination**: Efficient pagination for large datasets
 - **🌐 CORS**: Configurable CORS support for frontend integration
 - **🔒 Authorization**: Role-based access control
@@ -39,7 +39,7 @@ gosuomisf/
 
 - **Language**: Go 1.22+
 - **Web Framework**: [Gin](https://gin-gonic.com/)
-- **Database**: MySQL 8.0+
+- **Database**: PostgreSQL 15+
 - **Authentication**: JWT tokens
 - **Password Hashing**: bcrypt
 - **Testing**: Go testing framework with testify
@@ -123,7 +123,7 @@ GIN_MODE=debug
 
 ### Authentication
 - `POST /api/login` - User login
-- `POST /api/register` - User registration  
+- `POST /api/register` - User registration
 - `POST /api/refresh` - Refresh access token
 
 ### Works (Books & Literature)

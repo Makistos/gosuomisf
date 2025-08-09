@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -40,7 +41,7 @@ func (h *WorkHandler) GetWorks(c *gin.Context) {
 	var whereClause string
 
 	if query.Search != "" {
-		whereClause = " WHERE w.title LIKE ? OR w.orig_title LIKE ? OR w.description LIKE ?"
+		whereClause = " WHERE w.title ILIKE $1 OR w.orig_title ILIKE $2 OR w.description ILIKE $3"
 		searchTerm := "%" + query.Search + "%"
 		args = append(args, searchTerm, searchTerm, searchTerm)
 		baseQuery += whereClause
@@ -70,7 +71,8 @@ func (h *WorkHandler) GetWorks(c *gin.Context) {
 		orderClause += " ASC"
 	}
 
-	baseQuery += orderClause + " LIMIT ? OFFSET ?"
+	argCount := len(args)
+	baseQuery += orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount+1, argCount+2)
 	args = append(args, query.PageSize, offset)
 
 	var total int
@@ -199,7 +201,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		LEFT JOIN worktype wt ON w.type = wt.id
 		LEFT JOIN language l ON w.language = l.id
 		LEFT JOIN bookseries bs ON w.bookseries_id = bs.id
-		WHERE w.id = ?`
+		WHERE w.id = $1`
 
 	err = h.db.QueryRow(query, workID).Scan(
 		&work.ID, &work.Title, &subtitleNull, &origTitleNull, &pubYearNull,
@@ -277,7 +279,7 @@ func (h *WorkHandler) GetWorkAwards(c *gin.Context) {
 		return
 	}
 
-	query := `SELECT id, work_id, name, year, category, winner FROM awards WHERE work_id = ?`
+	query := `SELECT id, work_id, name, year, category, winner FROM awards WHERE work_id = $1`
 	rows, err := h.db.Query(query, workID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query awards"})

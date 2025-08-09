@@ -4,10 +4,11 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "8088:8088"
     environment:
-      - DATABASE_URL=root:password@tcp(db:3306)/suomisf?parseTime=true
+      - DATABASE_URL=postgresql://postgres:password@db:5432/suomisf?sslmode=disable
       - ENVIRONMENT=development
+      - PORT=8088
     depends_on:
       - db
     volumes:
@@ -15,14 +16,15 @@ services:
     working_dir: /app
 
   db:
-    image: mysql:8.0
+    image: postgres:15
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: suomisf
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: suomisf
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d/
 
   adminer:
@@ -34,4 +36,4 @@ services:
       - db
 
 volumes:
-  mysql_data:
+  postgres_data:

@@ -31,11 +31,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	// Query user from database
 	var user models.User
-	query := `SELECT id, username, password, role FROM users WHERE username = ?`
-	err := h.db.QueryRow(query, req.Username).Scan(&user.ID, &user.Username, &user.Password, &user.Role)
+	var isAdmin bool
+	query := `SELECT id, name, password_hash, is_admin FROM suomisf.user WHERE name = $1`
+	err := h.db.QueryRow(query, req.Username).Scan(&user.ID, &user.Username, &user.Password, &isAdmin)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
+	}
+
+	// Set role based on is_admin flag
+	if isAdmin {
+		user.Role = "admin"
+	} else {
+		user.Role = "user"
 	}
 
 	// Verify password
@@ -77,8 +85,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// Check if user already exists
 	var exists bool
-	checkQuery := `SELECT EXISTS(SELECT 1 FROM users WHERE username = ? OR email = ?)`
-	err := h.db.QueryRow(checkQuery, req.Username, req.Email).Scan(&exists)
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM suomisf.user WHERE name = $1)`
+	err := h.db.QueryRow(checkQuery, req.Username).Scan(&exists)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
@@ -99,20 +107,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	// Insert user
 	var userID int
 	insertQuery := `
-		INSERT INTO users (username, password, email, role, created_at, updated_at)
-		VALUES (?, ?, ?, ?, NOW(), NOW())`
-	result, err := h.db.Exec(insertQuery, req.Username, string(hashedPassword), req.Email, "user")
+		INSERT INTO suomisf.user (name, password_hash, is_admin, language)
+		VALUES ($1, $2, $3, $4) RETURNING id`
+	err = h.db.QueryRow(insertQuery, req.Username, string(hashedPassword), false, 7).Scan(&userID) // 7 = Finnish language
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
-
-	userIDInt64, err := result.LastInsertId()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
-		return
-	}
-	userID = int(userIDInt64)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
@@ -136,11 +137,19 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	// Get user from database to ensure they still exist and get current role
 	var user models.User
-	query := `SELECT id, username, role FROM users WHERE id = ?`
-	err = h.db.QueryRow(query, claims.UserID).Scan(&user.ID, &user.Username, &user.Role)
+	var isAdmin bool
+	query := `SELECT id, name, is_admin FROM suomisf.user WHERE id = $1`
+	err = h.db.QueryRow(query, claims.UserID).Scan(&user.ID, &user.Username, &isAdmin)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
+	}
+
+	// Set role based on is_admin flag
+	if isAdmin {
+		user.Role = "admin"
+	} else {
+		user.Role = "user"
 	}
 
 	// Generate new access token

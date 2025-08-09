@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -34,7 +35,7 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 	var whereClause string
 
 	if query.Search != "" {
-		whereClause = " WHERE t.name LIKE ? OR t.description LIKE ?"
+		whereClause = " WHERE t.name ILIKE $1 OR t.description ILIKE $2"
 		searchTerm := "%" + query.Search + "%"
 		args = append(args, searchTerm, searchTerm)
 		baseQuery += whereClause
@@ -57,7 +58,8 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		orderClause += " ASC"
 	}
 
-	baseQuery += orderClause + " LIMIT ? OFFSET ?"
+	argCount := len(args)
+	baseQuery += orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount+1, argCount+2)
 	args = append(args, query.PageSize, offset)
 
 	var total int
@@ -123,7 +125,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 	var typeNull sql.NullString
 	var descNull sql.NullString
 
-	query := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM tag t LEFT JOIN tagtype tt ON t.type_id = tt.id WHERE t.id = ?`
+	query := `SELECT t.id, t.name, tt.name as type, t.type_id, t.description FROM tag t LEFT JOIN tagtype tt ON t.type_id = tt.id WHERE t.id = $1`
 	err = h.db.QueryRow(query, tagID).Scan(
 		&tag.ID, &tag.Name, &typeNull, &tag.TypeID, &descNull,
 	)
