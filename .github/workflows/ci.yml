@@ -48,8 +48,13 @@ jobs:
 
     - name: Set up test database
       run: |
-        PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE suomisf_test;"
-        PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres suomisf_test < migrations/001_initial_schema.sql
+        # Database already exists from POSTGRES_DB service configuration
+        # Just check if we need to run migrations (if migrations file exists)
+        if [ -f migrations/001_initial_schema.sql ]; then
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres suomisf_test < migrations/001_initial_schema.sql
+        else
+          echo "No migrations found, assuming database is ready"
+        fi
 
     - name: Run tests
       env:
