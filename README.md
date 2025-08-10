@@ -48,7 +48,7 @@ gosuomisf/
 ## 📋 Prerequisites
 
 - Go 1.22 or higher
-- MySQL 8.0 or higher
+- PostgreSQL 15 or higher
 - Docker and Docker Compose (optional)
 
 ## 🚀 Quick Start
@@ -87,11 +87,11 @@ gosuomisf/
    # Edit .env with your database credentials
    ```
 
-3. **Set up MySQL database**
+3. **Set up PostgreSQL database**
    ```bash
-   mysql -u root -p < migrations/001_initial_schema.sql
+   psql -U postgres -c "CREATE DATABASE suomisf;"
    # Import the sample data
-   mysql -u root -p suomisf < suomisf.sql
+   psql -U postgres -d suomisf < suomisf.sql
    ```
 
 4. **Run the application**
@@ -106,8 +106,8 @@ The application uses environment variables for configuration. Create a `.env` fi
 ```env
 # Database
 DB_HOST=localhost
-DB_PORT=3306
-DB_USER=suomisf
+DB_PORT=5432
+DB_USER=mep
 DB_PASSWORD=password
 DB_NAME=suomisf
 
@@ -233,7 +233,27 @@ go install github.com/cosmtrek/air@latest
 air
 ```
 
-## 📊 Database Schema
+## � Security
+
+This application implements several security best practices:
+
+### Docker Security
+- **Distroless base image**: Uses `gcr.io/distroless/static-debian12:nonroot` to minimize attack surface
+- **Non-root user**: Runs as unprivileged user for enhanced security
+- **Static binary**: Compiled with security flags (`-w -s -extldflags "-static"`)
+- **Multi-stage build**: Reduces final image size and removes build dependencies
+
+### Authentication Security
+- **JWT tokens**: Secure token-based authentication
+- **Password hashing**: Uses bcrypt for secure password storage
+- **HTTPS ready**: Configured for TLS termination at reverse proxy level
+
+### Database Security
+- **Parameterized queries**: All database queries use parameter binding to prevent SQL injection
+- **Connection pooling**: Efficient and secure database connection management
+- **Environment variables**: Sensitive configuration stored in environment variables
+
+## �📊 Database Schema
 
 The application uses the original SuomiSF database schema with tables for:
 

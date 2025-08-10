@@ -57,10 +57,10 @@ docker-down:
 
 # Database commands
 db-create:
-	mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS suomisf;"
+	psql -U postgres -c "CREATE DATABASE IF NOT EXISTS suomisf;"
 
 db-drop:
-	mysql -u root -p -e "DROP DATABASE IF EXISTS suomisf;"
+	psql -U postgres -c "DROP DATABASE IF EXISTS suomisf;"
 
 db-reset: db-drop db-create migrate
 

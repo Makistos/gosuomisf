@@ -39,7 +39,7 @@ Thank you for your interest in contributing to GoSuomiSF! This document provides
 ### Prerequisites
 
 - Go 1.22 or higher
-- MySQL 8.0 or higher
+- PostgreSQL 15 or higher
 - Docker and Docker Compose (optional)
 
 ### Local Development
@@ -63,7 +63,7 @@ Thank you for your interest in contributing to GoSuomiSF! This document provides
 
 4. **Run migrations**:
    ```bash
-   mysql -u root -p < migrations/001_initial_schema.sql
+   psql -U postgres -d suomisf < suomisf.sql
    ```
 
 5. **Install dependencies**:
