@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,8 +30,6 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not available"})
 		return
 	}
-
-	offset := (query.Page - 1) * query.PageSize
 
 	// Updated query to include counts and proper type structure
 	baseQuery := `
@@ -79,8 +76,10 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		orderClause += "t.name"
 	case "type":
 		orderClause += "tt.name"
-	default:
+	case "id":
 		orderClause += "t.id"
+	default:
+		orderClause += "t.name" // Default to ordering by name
 	}
 
 	if query.Order == "desc" {
@@ -89,9 +88,7 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		orderClause += " ASC"
 	}
 
-	argCount := len(args)
-	baseQuery += orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount+1, argCount+2)
-	args = append(args, query.PageSize, offset)
+	baseQuery += orderClause
 
 	rows, err := h.db.Query(baseQuery, args...)
 	if err != nil {
