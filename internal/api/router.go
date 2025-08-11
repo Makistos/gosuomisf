@@ -62,7 +62,7 @@ func SetupRouter(db *database.DB, cfg *config.Config) *gin.Engine {
 		api.GET("/shorts/:shortId", shortHandler.GetShort)
 
 		// Tags routes
-		api.GET("/tags", tagHandler.GetTags)
+		api.GET("/tagsquick", tagHandler.GetTags)
 		api.GET("/tags/:tagId", tagHandler.GetTag)
 
 		// Protected routes (require authentication)

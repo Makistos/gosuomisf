@@ -105,13 +105,22 @@ type Short struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// TagType represents a tag type classification
+type TagType struct {
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 // Tag represents a classification tag
 type Tag struct {
-	ID          int     `json:"id" db:"id"`
-	Name        string  `json:"name" db:"name"`
-	Type        *string `json:"type" db:"type"`
-	TypeID      int     `json:"type_id" db:"type_id"`
-	Description *string `json:"description" db:"description"`
+	ID           int      `json:"id" db:"id"`
+	Name         string   `json:"name" db:"name"`
+	WorkCount    int      `json:"workcount" db:"workcount"`
+	ArticleCount int      `json:"articlecount" db:"articlecount"`
+	StoryCount   int      `json:"storycount" db:"storycount"`
+	Type         *TagType `json:"type,omitempty"`
+	TypeID       int      `json:"-" db:"type_id"` // Hidden in JSON response
+	Description  *string  `json:"description,omitempty" db:"description"`
 }
 
 // Award represents an award for a work
