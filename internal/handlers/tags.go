@@ -63,8 +63,6 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 			GROUP BY tag_id
 		) story_counts ON t.id = story_counts.tag_id`
 
-	countQuery := `SELECT COUNT(*) FROM suomisf.tag t`
-
 	var args []interface{}
 	var whereClause string
 
@@ -73,7 +71,6 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		searchTerm := "%" + query.Search + "%"
 		args = append(args, searchTerm, searchTerm)
 		baseQuery += whereClause
-		countQuery += whereClause
 	}
 
 	orderClause := " ORDER BY "
@@ -95,14 +92,6 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 	argCount := len(args)
 	baseQuery += orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount+1, argCount+2)
 	args = append(args, query.PageSize, offset)
-
-	var total int
-	countArgs := args[:len(args)-2] // Remove limit and offset
-	err := h.db.QueryRow(countQuery, countArgs...).Scan(&total)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get total count"})
-		return
-	}
 
 	rows, err := h.db.Query(baseQuery, args...)
 	if err != nil {
@@ -148,17 +137,8 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		tags = append(tags, tag)
 	}
 
-	totalPages := (total + query.PageSize - 1) / query.PageSize
-
-	response := models.PaginatedResponse{
-		Data:       tags,
-		Page:       query.Page,
-		PageSize:   query.PageSize,
-		Total:      total,
-		TotalPages: totalPages,
-	}
-
-	c.JSON(http.StatusOK, response)
+	// Return the array directly instead of paginated response
+	c.JSON(http.StatusOK, tags)
 }
 
 func (h *TagHandler) GetTag(c *gin.Context) {
