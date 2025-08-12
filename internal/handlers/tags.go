@@ -148,7 +148,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 	}
 
 	// Check database connection
-	if h.db == nil {
+	if h.db == nil || h.db.DB == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database not available"})
 		return
 	}
