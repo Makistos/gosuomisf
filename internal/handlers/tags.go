@@ -134,7 +134,7 @@ func (h *TagHandler) GetTags(c *gin.Context) {
 		tags = append(tags, tag)
 	}
 
-	// Return the array directly instead of paginated response
+	// Return all tags as a simple array
 	c.JSON(http.StatusOK, tags)
 }
 
@@ -294,7 +294,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 					ORDER BY e.pubyear, e.editionnum`
 
 				editionsRows, err := h.db.Query(editionsQuery, workID)
-				var editions []map[string]interface{}
+				editions := make([]map[string]interface{}, 0) // Initialize as empty slice
 				if err != nil {
 					// Log the error for debugging
 					println("Editions query error:", err.Error())
@@ -406,7 +406,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 							ORDER BY p.name`
 
 						editionContribRows, err := h.db.Query(editionContributionsQuery, int(editionID.Int64))
-						var editionContributions []map[string]interface{}
+						editionContributions := make([]map[string]interface{}, 0) // Initialize as empty slice
 						if err == nil {
 							defer editionContribRows.Close()
 							for editionContribRows.Next() {
@@ -469,7 +469,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 							ORDER BY id`
 
 						imagesRows, err := h.db.Query(imagesQuery, int(editionID.Int64))
-						var images []map[string]interface{}
+						images := make([]map[string]interface{}, 0) // Initialize as empty slice
 						if err == nil {
 							defer imagesRows.Close()
 							for imagesRows.Next() {
@@ -509,7 +509,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 							ORDER BY p.name`
 
 						translatorsRows, err := h.db.Query(translatorsQuery, int(editionID.Int64))
-						var translators []map[string]interface{}
+						translators := make([]map[string]interface{}, 0) // Initialize as empty slice
 						if err == nil {
 							defer translatorsRows.Close()
 							for translatorsRows.Next() {
@@ -710,7 +710,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 					ORDER BY p.name`
 
 				contributionsRows, err := h.db.Query(contributionsQuery, workID)
-				var contributions []map[string]interface{}
+				contributions := make([]map[string]interface{}, 0) // Initialize as empty slice
 				if err == nil {
 					defer contributionsRows.Close()
 					for contributionsRows.Next() {
@@ -774,7 +774,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 					ORDER BY g.name`
 
 				genresRows, err := h.db.Query(genresQuery, workID)
-				var genres []map[string]interface{}
+				genres := make([]map[string]interface{}, 0) // Initialize as empty slice
 				if err == nil {
 					defer genresRows.Close()
 					for genresRows.Next() {

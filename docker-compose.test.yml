@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  test-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: suomisf_test
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+      - ./test-schema.sql:/docker-entrypoint-initdb.d/test-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d suomisf_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  test-runner:
+    build: 
+      context: .
+      target: test
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@test-db:5432/suomisf_test?sslmode=disable
+      - ENVIRONMENT=test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["go", "test", "./internal/handlers/", "-v"]
+
+volumes:
+  test_postgres_data:

@@ -23,6 +23,29 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -a -installsuffix cgo \
     -o main .
 
+# Test stage - for running tests
+FROM golang:1.24-alpine AS test
+
+# Install git for go modules
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Set environment for testing
+ENV ENVIRONMENT=test
+
+# Command will be overridden by docker-compose
+CMD ["go", "test", "./...", "-v"]
+
 # Final stage - use distroless for security
 FROM gcr.io/distroless/static-debian12:nonroot
 

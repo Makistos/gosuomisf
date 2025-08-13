@@ -77,10 +77,10 @@ func TestTagHandler_GetTags(t *testing.T) {
 		assert.True(t, w.Code == http.StatusOK || w.Code == http.StatusInternalServerError)
 
 		if w.Code == http.StatusOK {
-			var response models.PaginatedResponse
-			err := json.Unmarshal(w.Body.Bytes(), &response)
+			var tags []models.Tag
+			err := json.Unmarshal(w.Body.Bytes(), &tags)
 			assert.NoError(t, err)
-			assert.GreaterOrEqual(t, response.Total, 0)
+			assert.GreaterOrEqual(t, len(tags), 0)
 		}
 	} else {
 		// With mock DB, expect error due to nil connection
