@@ -27,7 +27,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Download dependencies
       run: |
@@ -42,13 +42,8 @@ jobs:
 
     - name: Set up test database
       run: |
-        # Database already exists from POSTGRES_DB service configuration
-        # Just check if we need to run migrations (if migrations file exists)
-        if [ -f migrations/001_initial_schema.sql ]; then
-          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres suomisf_test < migrations/001_initial_schema.sql
-        else
-          echo "No migrations found, assuming database is ready"
-        fi
+        # Use our test schema instead of migrations
+        PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres suomisf_test < test-schema.sql
 
     - name: Run tests
       env:
@@ -78,7 +73,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.22'
+        go-version: '1.24'
 
     - name: Download dependencies
       run: |
