@@ -15,7 +15,7 @@ import (
 )
 
 func TestTagHandler_GetTags_Success(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -39,7 +39,7 @@ func TestTagHandler_GetTags_Success(t *testing.T) {
 }
 
 func TestTagHandler_GetTags_WithPagination(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -63,7 +63,7 @@ func TestTagHandler_GetTags_WithPagination(t *testing.T) {
 }
 
 func TestTagHandler_GetTags_WithSearch(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -87,7 +87,7 @@ func TestTagHandler_GetTags_WithSearch(t *testing.T) {
 }
 
 func TestTagHandler_GetTags_WithSorting(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -140,7 +140,7 @@ func TestTagHandler_GetTags_NilDatabase(t *testing.T) {
 }
 
 func TestTagHandler_GetTag_Success(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -193,7 +193,7 @@ func TestTagHandler_GetTag_Success(t *testing.T) {
 }
 
 func TestTagHandler_GetTag_CompleteStructure(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -294,7 +294,7 @@ func TestTagHandler_GetTag_CompleteStructure(t *testing.T) {
 }
 
 func TestTagHandler_GetTag_NotFound(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -351,7 +351,7 @@ func TestTagHandler_GetTag_NilDatabase(t *testing.T) {
 }
 
 func TestTagHandler_DataIntegrity(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -409,7 +409,7 @@ func TestTagHandler_DataIntegrity(t *testing.T) {
 }
 
 func TestTagHandler_ResponseHeaders(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -428,7 +428,7 @@ func TestTagHandler_ResponseHeaders(t *testing.T) {
 }
 
 func TestTagHandler_EdgeCases(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 
@@ -465,7 +465,7 @@ func TestTagHandler_EdgeCases(t *testing.T) {
 }
 
 func TestTagHandler_PerformanceBaseline(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 

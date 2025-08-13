@@ -14,7 +14,7 @@ import (
 
 // Integration tests that run with database connection
 func TestTagHandler_Integration_GetTagsAndGetTag(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping integration test without database connection")
 	}
 
@@ -62,7 +62,7 @@ func TestTagHandler_Integration_GetTagsAndGetTag(t *testing.T) {
 }
 
 func TestTagHandler_Integration_VerifyDataConsistency(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping integration test without database connection")
 	}
 
@@ -141,7 +141,7 @@ func TestTagHandler_Integration_VerifyDataConsistency(t *testing.T) {
 }
 
 func TestTagHandler_Integration_RoleBasedFiltering(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping integration test without database connection")
 	}
 
@@ -214,7 +214,7 @@ func TestTagHandler_Integration_RoleBasedFiltering(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkTagHandler_GetTags(b *testing.B) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		b.Skip("Skipping benchmark without database connection")
 	}
 
@@ -231,7 +231,7 @@ func BenchmarkTagHandler_GetTags(b *testing.B) {
 }
 
 func BenchmarkTagHandler_GetTag(b *testing.B) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		b.Skip("Skipping benchmark without database connection")
 	}
 
@@ -248,7 +248,7 @@ func BenchmarkTagHandler_GetTag(b *testing.B) {
 }
 
 func BenchmarkTagHandler_GetTagWithComplexData(b *testing.B) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		b.Skip("Skipping benchmark without database connection")
 	}
 
@@ -273,7 +273,7 @@ func BenchmarkTagHandler_GetTagWithComplexData(b *testing.B) {
 
 // Stress test to verify memory usage and stability
 func TestTagHandler_StressTest(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping stress test without database connection")
 	}
 
@@ -306,7 +306,7 @@ func TestTagHandler_StressTest(t *testing.T) {
 
 // Test with various tag IDs to ensure robustness
 func TestTagHandler_VariousTagIDs(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping test without database connection")
 	}
 

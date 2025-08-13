@@ -31,8 +31,8 @@ func TestMain(m *testing.M) {
 	var err error
 	testDB, err = database.Initialize(dbURL)
 	if err != nil {
-		// If no database available, create a mock
-		testDB = &database.DB{}
+		// If no database available, set testDB to nil
+		testDB = nil
 	}
 
 	// Run tests
@@ -54,7 +54,7 @@ func TestFrontPageHandler(t *testing.T) {
 
 	handler.GetFrontPageData(c)
 
-	if testDB.DB != nil {
+	if testDB != nil {
 		// If we have a real DB, expect success or specific error
 		assert.True(t, w.Code == http.StatusOK || w.Code == http.StatusInternalServerError)
 	} else {
@@ -72,7 +72,7 @@ func TestTagHandler_GetTags(t *testing.T) {
 
 	handler.GetTags(c)
 
-	if testDB.DB != nil {
+	if testDB != nil {
 		// With real DB, should get data or proper error
 		assert.True(t, w.Code == http.StatusOK || w.Code == http.StatusInternalServerError)
 
@@ -125,7 +125,7 @@ func TestTagHandler_InvalidTagID(t *testing.T) {
 }
 
 func TestAuthHandler_Register(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping auth tests without database")
 	}
 
@@ -156,7 +156,7 @@ func TestAuthHandler_Register(t *testing.T) {
 }
 
 func TestAuthHandler_Login(t *testing.T) {
-	if testDB.DB == nil {
+	if testDB == nil {
 		t.Skip("Skipping auth tests without database")
 	}
 
