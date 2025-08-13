@@ -1242,14 +1242,14 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 
 	// Build comprehensive response matching legacy Python API exactly
 	response := map[string]interface{}{
-		"works":     works,     // Always include, even if empty array
-		"articles":  articles,  // Always include, even if empty array
-		"stories":   stories,   // Always include, even if empty array
-		"magazines": []interface{}{}, // Always empty array for now
-		"people":    []interface{}{}, // Always empty array for now
-		"type":      tag.Type,
-		"id":        tag.ID,
-		"name":      tag.Name,
+		"works":       works,           // Always include, even if empty array
+		"articles":    articles,        // Always include, even if empty array
+		"stories":     stories,         // Always include, even if empty array
+		"magazines":   []interface{}{}, // Always empty array for now
+		"people":      []interface{}{}, // Always empty array for now
+		"type":        tag.Type,
+		"id":          tag.ID,
+		"name":        tag.Name,
 		"description": tag.Description,
 	}
 

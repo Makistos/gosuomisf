@@ -23,12 +23,12 @@ trap cleanup EXIT
 if ! sudo docker-compose -f docker-compose.test.yml ps test-db | grep -q "Up"; then
     echo "📦 Starting PostgreSQL test database..."
     sudo docker-compose -f docker-compose.test.yml up -d test-db
-    
+
     # Wait for database
     echo "⏳ Waiting for database..."
     max_attempts=30
     attempt=0
-    
+
     while [ $attempt -lt $max_attempts ]; do
         if sudo docker-compose -f docker-compose.test.yml exec test-db pg_isready -U postgres -d suomisf_test > /dev/null 2>&1; then
             echo "✅ Database is ready!"
@@ -37,7 +37,7 @@ if ! sudo docker-compose -f docker-compose.test.yml ps test-db | grep -q "Up"; t
         attempt=$((attempt + 1))
         sleep 2
     done
-    
+
     # Wait for SQL initialization
     sleep 5
 fi

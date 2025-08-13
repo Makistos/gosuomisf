@@ -242,15 +242,15 @@ INSERT INTO suomisf.worktype (id, name) VALUES (1, 'Novel'), (2, 'Collection'), 
 INSERT INTO suomisf.storytype (id, name) VALUES (1, 'Short Story'), (2, 'Novella'), (3, 'Novelette');
 
 -- ContributorRoles
-INSERT INTO suomisf.contributorrole (id, name) VALUES 
-(1, 'Kirjoittaja'), (2, 'Kääntäjä'), (3, 'Toimittaja'), 
+INSERT INTO suomisf.contributorrole (id, name) VALUES
+(1, 'Kirjoittaja'), (2, 'Kääntäjä'), (3, 'Toimittaja'),
 (4, 'Kuvittaja'), (5, 'Kannen kuva'), (6, 'Muokkaaja');
 
 -- Countries
 INSERT INTO suomisf.country (id, name) VALUES (1, 'Finland'), (2, 'United States'), (3, 'United Kingdom');
 
 -- Test Tags
-INSERT INTO suomisf.tag (id, name, type_id, description) VALUES 
+INSERT INTO suomisf.tag (id, name, type_id, description) VALUES
 (303, 'Science Fiction', 1, 'Science fiction theme'),
 (304, 'Fantasy', 1, 'Fantasy theme'),
 (305, 'Space', 2, 'Space setting');
@@ -259,42 +259,42 @@ INSERT INTO suomisf.tag (id, name, type_id, description) VALUES
 INSERT INTO suomisf.publisher (id, name) VALUES (1, 'Test Publisher'), (2, 'Another Publisher');
 
 -- Test Genres
-INSERT INTO suomisf.genre (id, name, abbr) VALUES 
+INSERT INTO suomisf.genre (id, name, abbr) VALUES
 (1, 'Science Fiction', 'SF'), (2, 'Fantasy', 'F'), (3, 'Horror', 'H');
 
 -- Test People
-INSERT INTO suomisf.person (id, name, alt_name, fullname, nationality_id) VALUES 
+INSERT INTO suomisf.person (id, name, alt_name, fullname, nationality_id) VALUES
 (1, 'Test Author', 'T. Author', 'Test Full Author', 1),
 (2, 'Another Writer', NULL, 'Another Full Writer', 2);
 
 -- Test Works
-INSERT INTO suomisf.work (id, title, subtitle, pubyear, language, type, author_str) VALUES 
+INSERT INTO suomisf.work (id, title, subtitle, pubyear, language, type, author_str) VALUES
 (1, 'Test Science Fiction Novel', 'A Test', 2023, 1, 1, 'Test Author'),
 (2, 'Another Fantasy Book', NULL, 2022, 2, 1, 'Another Writer');
 
 -- Test Articles
-INSERT INTO suomisf.article (id, title, person, author_rel, excerpt) VALUES 
+INSERT INTO suomisf.article (id, title, person, author_rel, excerpt) VALUES
 (1, 'Test Article about SF', 'Test Author', 'Author', 'This is a test article about science fiction.');
 
 -- Test Short Stories
-INSERT INTO suomisf.shortstory (id, title, language, pubyear, story_type) VALUES 
+INSERT INTO suomisf.shortstory (id, title, language, pubyear, story_type) VALUES
 (1, 'Test Short Story', 1, 2023, 1),
 (2, 'Another Tale', 2, 2022, 2);
 
 -- Test Editions
-INSERT INTO suomisf.edition (id, title, pubyear, publisher_id) VALUES 
+INSERT INTO suomisf.edition (id, title, pubyear, publisher_id) VALUES
 (1, 'Test SF Novel - First Edition', 2023, 1),
 (2, 'Fantasy Book Edition', 2022, 2);
 
 -- Test Parts (central junction)
-INSERT INTO suomisf.part (id, work_id, edition_id, shortstory_id) VALUES 
+INSERT INTO suomisf.part (id, work_id, edition_id, shortstory_id) VALUES
 (1, 1, 1, NULL),  -- Work 1 -> Edition 1
 (2, 2, 2, NULL),  -- Work 2 -> Edition 2
 (3, NULL, NULL, 1), -- Story 1
 (4, NULL, NULL, 2); -- Story 2
 
 -- Test Contributors
-INSERT INTO suomisf.contributor (id, part_id, person_id, role_id) VALUES 
+INSERT INTO suomisf.contributor (id, part_id, person_id, role_id) VALUES
 (1, 1, 1, 1),  -- Work 1, Author role
 (2, 2, 2, 1),  -- Work 2, Author role
 (3, 1, 2, 2),  -- Work 1, Translator role

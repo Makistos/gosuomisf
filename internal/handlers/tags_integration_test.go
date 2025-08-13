@@ -168,7 +168,7 @@ func TestTagHandler_Integration_RoleBasedFiltering(t *testing.T) {
 						contrib := contribInterface.(map[string]interface{})
 						if role, ok := contrib["role"].(map[string]interface{}); ok {
 							roleID := role["id"].(float64)
-							assert.True(t, roleID == 1 || roleID == 3, 
+							assert.True(t, roleID == 1 || roleID == 3,
 								"Work contributions should only have role IDs 1 or 3, got %.0f", roleID)
 						}
 					}
@@ -183,7 +183,7 @@ func TestTagHandler_Integration_RoleBasedFiltering(t *testing.T) {
 								contrib := contribInterface.(map[string]interface{})
 								if role, ok := contrib["role"].(map[string]interface{}); ok {
 									roleID := role["id"].(float64)
-									assert.True(t, roleID == 2 || roleID == 4 || roleID == 5, 
+									assert.True(t, roleID == 2 || roleID == 4 || roleID == 5,
 										"Edition contributions should only have role IDs 2, 4, or 5, got %.0f", roleID)
 								}
 							}
@@ -202,7 +202,7 @@ func TestTagHandler_Integration_RoleBasedFiltering(t *testing.T) {
 						contrib := contribInterface.(map[string]interface{})
 						if role, ok := contrib["role"].(map[string]interface{}); ok {
 							roleID := role["id"].(float64)
-							assert.True(t, roleID == 1 || roleID == 2 || roleID == 6, 
+							assert.True(t, roleID == 1 || roleID == 2 || roleID == 6,
 								"Story contributors should only have role IDs 1, 2, or 6, got %.0f", roleID)
 						}
 					}
