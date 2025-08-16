@@ -1,0 +1,2 @@
+- Always after creating new end points you MUST run ./run-tests.sh to verify everything still works including the newly created end point
+- Always check Go formatting before submitting changes to GitHub
