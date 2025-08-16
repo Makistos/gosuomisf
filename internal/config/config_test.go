@@ -57,5 +57,5 @@ func TestLoadDefaults(t *testing.T) {
 
 	// Should have default values
 	assert.NotEmpty(t, cfg.JWTSecret) // Default random secret
-	assert.Equal(t, "8080", cfg.Port) // Default port
+	assert.Equal(t, "5050", cfg.Port) // Default port
 }

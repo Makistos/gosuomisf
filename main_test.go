@@ -19,7 +19,7 @@ func TestHealthEndpoint(t *testing.T) {
 		JWTSecret:          "test-secret",
 		JWTExpiryHours:     24,
 		RefreshExpiryHours: 168,
-		Port:               "8080",
+		Port:               "5050",
 	}
 
 	// Create a mock database (for this test we'll skip DB initialization)
@@ -43,7 +43,7 @@ func TestRouterSetup(t *testing.T) {
 		JWTSecret:          "test-secret",
 		JWTExpiryHours:     24,
 		RefreshExpiryHours: 168,
-		Port:               "8080",
+		Port:               "5050",
 	}
 
 	db := &database.DB{}

@@ -24,7 +24,7 @@ func Load() *Config {
 		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		JWTExpiryHours:     jwtExpiryHours,
 		RefreshExpiryHours: refreshExpiryHours,
-		Port:               getEnv("PORT", "8080"),
+		Port:               getEnv("PORT", "5050"),
 	}
 }
 

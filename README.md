@@ -351,7 +351,7 @@ If you have any questions or issues, please:
    make run
    ```
 
-The API will be available at `http://localhost:8080/api`
+The API will be available at `http://localhost:5050/api`
 
 ### Using Docker
 
@@ -361,7 +361,7 @@ The API will be available at `http://localhost:8080/api`
    ```
 
 This will start:
-- API server on port 8080
+- API server on port 5050
 - MySQL database on port 3306
 - Adminer (database admin) on port 8081
 
@@ -412,7 +412,7 @@ JWT_EXPIRY_HOURS=24
 REFRESH_EXPIRY_HOURS=168
 
 # Server
-PORT=8080
+PORT=5050
 ```
 
 ## Database Schema

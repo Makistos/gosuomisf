@@ -60,7 +60,7 @@ COPY --from=builder /app/main /app/main
 USER nonroot:nonroot
 
 # Expose port
-EXPOSE 8080
+EXPOSE 5050
 
 # Run the application
 ENTRYPOINT ["/app/main"]
