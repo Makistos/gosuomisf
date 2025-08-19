@@ -296,7 +296,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		FROM suomisf.edition e
 		INNER JOIN suomisf.part pt ON e.id = pt.edition_id
 		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
-		WHERE pt.work_id = $1
+		WHERE pt.work_id = $1 and pt.shortstory_id IS NULL
 		ORDER BY e.pubyear, e.editionnum`
 
 	editionsRows, err := h.db.Query(editionsQuery, workID)
@@ -710,8 +710,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		FROM suomisf.tag t
 		JOIN suomisf.worktag wt ON t.id = wt.tag_id
 		LEFT JOIN suomisf.tagtype tt ON t.type_id = tt.id
-		WHERE wt.work_id = $1
-		ORDER BY t.name`
+		WHERE wt.work_id = $1`
 
 	tagsRows, err := h.db.Query(tagsQuery, workID)
 	if err == nil {
@@ -765,7 +764,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 
 			link := map[string]interface{}{
 				"id":  linkID,
-				"url": linkURL,
+				"link": linkURL,
 			}
 			if linkDesc.Valid {
 				link["description"] = linkDesc.String
@@ -781,10 +780,14 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 	work.Awards = []map[string]interface{}{} // Initialize as empty slice
 	awardsQuery := `
 		SELECT aw.id, aw.year, a.id as award_id, a.name as award_name,
-		       ac.id as category_id, ac.name as category_name
+		       ac.id as category_id, ac.name as category_name,
+		       w.id as work_id, w.title as work_title,
+		       s.id as story_id, s.title as story_title
 		FROM suomisf.awarded aw
 		JOIN suomisf.award a ON aw.award_id = a.id
 		LEFT JOIN suomisf.awardcategory ac ON aw.category_id = ac.id
+		LEFT JOIN suomisf.work w ON aw.work_id = w.id
+		LEFT JOIN suomisf.shortstory s ON aw.story_id = s.id
 		WHERE aw.work_id = $1
 		ORDER BY aw.year DESC, a.name`
 
@@ -796,8 +799,13 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 			var awardName string
 			var categoryID sql.NullInt32
 			var categoryName sql.NullString
+			var workAwardID sql.NullInt32
+			var workTitle sql.NullString
+			var shortID sql.NullInt32
+			var shortTitle sql.NullString
 
-			err := awardsRows.Scan(&awardedID, &year, &awardID, &awardName, &categoryID, &categoryName)
+			err := awardsRows.Scan(&awardedID, &year, &awardID, &awardName, &categoryID, &categoryName,
+				&workAwardID, &workTitle, &shortID, &shortTitle)
 			if err != nil {
 				continue // Skip this award if there's an error
 			}
@@ -818,6 +826,26 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				}
 			} else {
 				award["category"] = nil
+			}
+
+			// Add work object if it exists
+			if workAwardID.Valid && workTitle.Valid {
+				award["work"] = map[string]interface{}{
+					"id":    int(workAwardID.Int32),
+					"title": workTitle.String,
+				}
+			} else {
+				award["work"] = nil
+			}
+
+			// Add short story object if it exists
+			if shortID.Valid && shortTitle.Valid {
+				award["short"] = map[string]interface{}{
+					"id":    int(shortID.Int32),
+					"title": shortTitle.String,
+				}
+			} else {
+				award["short"] = nil
 			}
 
 			work.Awards = append(work.Awards, award)

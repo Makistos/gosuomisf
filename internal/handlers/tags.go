@@ -281,421 +281,8 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 					}
 				}
 
-				// Query editions for this work through the part table
-				editionsQuery := `
-					SELECT e.id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn,
-					       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
-					       e.coverimage, e.misc, e.imported_string, e.verified,
-					       p.id as publisher_id, p.name as publisher_name
-					FROM suomisf.edition e
-					INNER JOIN suomisf.part pt ON e.id = pt.edition_id
-					LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
-					WHERE pt.work_id = $1
-					ORDER BY e.pubyear, e.editionnum`
-
-				editionsRows, err := h.db.Query(editionsQuery, workID)
-				editions := make([]map[string]interface{}, 0) // Initialize as empty slice
-				if err != nil {
-					// Log the error for debugging
-					println("Editions query error:", err.Error())
-					editions = []map[string]interface{}{} // Initialize empty array
-				} else {
-					defer editionsRows.Close()
-					editionCount := 0
-					for editionsRows.Next() {
-						editionCount++
-						var edition map[string]interface{} = make(map[string]interface{})
-						var editionID, pubyear, editionnum, version, pubseriesnum, pages, size, dustcover, coverimage sql.NullInt64
-						var publisherID sql.NullInt64
-						var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName sql.NullString
-						var verified sql.NullBool
-
-						err := editionsRows.Scan(&editionID, &eTitle, &eSubtitle, &pubyear, &editionnum, &version,
-							&isbn, &printedin, &pubseriesnum, &collInfo, &pages, &size, &dustcover, &coverimage,
-							&misc, &importedString, &verified, &publisherID, &publisherName)
-						if err != nil {
-							println("Edition scan error:", err.Error())
-							continue
-						}
-						if editionID.Valid {
-							edition["id"] = int(editionID.Int64)
-						}
-						if eTitle.Valid {
-							edition["title"] = eTitle.String
-						}
-						if eSubtitle.Valid {
-							edition["subtitle"] = eSubtitle.String
-						} else {
-							edition["subtitle"] = ""
-						}
-						if pubyear.Valid {
-							edition["pubyear"] = int(pubyear.Int64)
-						}
-						if editionnum.Valid {
-							edition["editionnum"] = int(editionnum.Int64)
-						}
-						if version.Valid {
-							edition["version"] = int(version.Int64)
-						} else {
-							edition["version"] = nil
-						}
-						if isbn.Valid {
-							edition["isbn"] = isbn.String
-						}
-						if printedin.Valid {
-							edition["printedin"] = printedin.String
-						} else {
-							edition["printedin"] = nil
-						}
-						if pubseriesnum.Valid {
-							edition["pubseriesnum"] = int(pubseriesnum.Int64)
-						} else {
-							edition["pubseriesnum"] = nil
-						}
-						if collInfo.Valid {
-							edition["coll_info"] = collInfo.String
-						} else {
-							edition["coll_info"] = ""
-						}
-						if pages.Valid {
-							edition["pages"] = int(pages.Int64)
-						}
-						if size.Valid {
-							edition["size"] = int(size.Int64)
-						}
-						if dustcover.Valid {
-							edition["dustcover"] = int(dustcover.Int64)
-						}
-						if coverimage.Valid {
-							edition["coverimage"] = int(coverimage.Int64)
-						}
-						if misc.Valid {
-							edition["misc"] = misc.String
-						} else {
-							edition["misc"] = nil
-						}
-						if importedString.Valid {
-							edition["imported_string"] = importedString.String
-						} else {
-							edition["imported_string"] = ""
-						}
-						if verified.Valid {
-							edition["verified"] = verified.Bool
-						} else {
-							edition["verified"] = false
-						}
-
-						// Add publisher info as nested object
-						if publisherID.Valid && publisherName.Valid {
-							edition["publisher"] = map[string]interface{}{
-								"id":   int(publisherID.Int64),
-								"name": publisherName.String,
-							}
-						}
-
-						// Query edition contributions through part table - only role_ids 2, 4, 5
-						editionContributionsQuery := `
-							SELECT DISTINCT p.id, p.name, p.alt_name, cr.id as role_id, cr.name as role_name,
-							       c.description, c.real_person_id, rp.name as real_person_name
-							FROM suomisf.part pt
-							INNER JOIN suomisf.contributor c ON pt.id = c.part_id
-							INNER JOIN suomisf.person p ON c.person_id = p.id
-							INNER JOIN suomisf.contributorrole cr ON c.role_id = cr.id
-							LEFT JOIN suomisf.person rp ON c.real_person_id = rp.id
-							WHERE pt.edition_id = $1 AND cr.id IN (2, 4, 5)
-							ORDER BY p.name`
-
-						editionContribRows, err := h.db.Query(editionContributionsQuery, int(editionID.Int64))
-						editionContributions := make([]map[string]interface{}, 0) // Initialize as empty slice
-						if err == nil {
-							defer editionContribRows.Close()
-							for editionContribRows.Next() {
-								var contrib map[string]interface{} = make(map[string]interface{})
-								var personID, roleID int
-								var personName, personAltName, roleName, description, realPersonName sql.NullString
-								var realPersonID sql.NullInt64
-
-								err := editionContribRows.Scan(&personID, &personName, &personAltName, &roleID, &roleName,
-									&description, &realPersonID, &realPersonName)
-								if err == nil {
-									// Person object
-									person := map[string]interface{}{
-										"id": personID,
-									}
-									if personName.Valid {
-										person["name"] = personName.String
-									}
-									if personAltName.Valid {
-										person["alt_name"] = personAltName.String
-									}
-									contrib["person"] = person
-
-									// Role object
-									if roleName.Valid {
-										contrib["role"] = map[string]interface{}{
-											"id":   roleID,
-											"name": roleName.String,
-										}
-									}
-
-									// Description
-									if description.Valid {
-										contrib["description"] = description.String
-									} else {
-										contrib["description"] = nil
-									}
-
-									// Real person (if exists)
-									if realPersonID.Valid && realPersonName.Valid {
-										contrib["real_person"] = map[string]interface{}{
-											"id":   int(realPersonID.Int64),
-											"name": realPersonName.String,
-										}
-									} else {
-										contrib["real_person"] = nil
-									}
-
-									editionContributions = append(editionContributions, contrib)
-								}
-							}
-						}
-						edition["contributions"] = editionContributions
-
-						// Query edition images
-						imagesQuery := `
-							SELECT id, image_src, image_attr
-							FROM suomisf.editionimage
-							WHERE edition_id = $1
-							ORDER BY id`
-
-						imagesRows, err := h.db.Query(imagesQuery, int(editionID.Int64))
-						images := make([]map[string]interface{}, 0) // Initialize as empty slice
-						if err == nil {
-							defer imagesRows.Close()
-							for imagesRows.Next() {
-								var image map[string]interface{} = make(map[string]interface{})
-								var imageID int
-								var imageSrc, imageAttr sql.NullString
-
-								err := imagesRows.Scan(&imageID, &imageSrc, &imageAttr)
-								if err == nil {
-									image["id"] = imageID
-									if imageSrc.Valid {
-										image["image_src"] = imageSrc.String
-									}
-									if imageAttr.Valid {
-										image["image_attr"] = imageAttr.String
-									} else {
-										image["image_attr"] = nil
-									}
-									images = append(images, image)
-								}
-							}
-						}
-						edition["images"] = images
-
-						// Query translators (contributors with translator role)
-						translatorsQuery := `
-							SELECT DISTINCT p.id, p.name, p.alt_name, p.fullname, p.dob, p.dod,
-							       p.image_src, p.image_attr, p.bio, p.bio_src, p.imported_string,
-							       p.first_name, p.last_name, p.other_names, p.nationality_id,
-							       c.id as country_id, c.name as country_name
-							FROM suomisf.person p
-							INNER JOIN suomisf.contributor con ON p.id = con.person_id
-							INNER JOIN suomisf.part pt ON con.part_id = pt.id
-							INNER JOIN suomisf.contributorrole cr ON con.role_id = cr.id
-							LEFT JOIN suomisf.country c ON p.nationality_id = c.id
-							WHERE pt.edition_id = $1 AND cr.name = 'Kääntäjä'
-							ORDER BY p.name`
-
-						translatorsRows, err := h.db.Query(translatorsQuery, int(editionID.Int64))
-						translators := make([]map[string]interface{}, 0) // Initialize as empty slice
-						if err == nil {
-							defer translatorsRows.Close()
-							for translatorsRows.Next() {
-								var translator map[string]interface{} = make(map[string]interface{})
-								var personID int
-								var name, altName, fullname, firstName, lastName, otherNames, imageSrc, imageAttr, bio, bioSrc, importedString sql.NullString
-								var dob, dod sql.NullInt64
-								var nationalityID sql.NullInt64
-								var countryID sql.NullInt64
-								var countryName sql.NullString
-
-								err := translatorsRows.Scan(&personID, &name, &altName, &fullname, &dob, &dod,
-									&imageSrc, &imageAttr, &bio, &bioSrc, &importedString,
-									&firstName, &lastName, &otherNames, &nationalityID,
-									&countryID, &countryName)
-
-								if err == nil {
-									translator["id"] = personID
-									if name.Valid {
-										translator["name"] = name.String
-									}
-									if altName.Valid {
-										translator["alt_name"] = altName.String
-									}
-									if fullname.Valid {
-										translator["fullname"] = fullname.String
-									} else {
-										translator["fullname"] = ""
-									}
-									if imageSrc.Valid {
-										translator["image_src"] = imageSrc.String
-									} else {
-										translator["image_src"] = nil
-									}
-									if dob.Valid {
-										translator["dob"] = int(dob.Int64)
-									} else {
-										translator["dob"] = nil
-									}
-									if dod.Valid {
-										translator["dod"] = int(dod.Int64)
-									} else {
-										translator["dod"] = nil
-									}
-									if firstName.Valid {
-										translator["first_name"] = firstName.String
-									}
-									if lastName.Valid {
-										translator["last_name"] = lastName.String
-									}
-									if otherNames.Valid {
-										translator["other_names"] = otherNames.String
-									} else {
-										translator["other_names"] = nil
-									}
-									if imageAttr.Valid {
-										translator["image_attr"] = imageAttr.String
-									} else {
-										translator["image_attr"] = ""
-									}
-									if bio.Valid {
-										translator["bio"] = bio.String
-									} else {
-										translator["bio"] = nil
-									}
-									if bioSrc.Valid {
-										translator["bio_src"] = bioSrc.String
-									} else {
-										translator["bio_src"] = ""
-									}
-									if importedString.Valid {
-										translator["imported_string"] = importedString.String
-									} else {
-										translator["imported_string"] = nil
-									}
-
-									// Add nationality
-									if countryID.Valid && countryName.Valid {
-										translator["nationality"] = map[string]interface{}{
-											"id":   int(countryID.Int64),
-											"name": countryName.String,
-										}
-									} else {
-										translator["nationality"] = nil
-									}
-
-									// Query roles for this person
-									rolesQuery := `
-										SELECT DISTINCT cr.name
-										FROM suomisf.contributorrole cr
-										INNER JOIN suomisf.contributor c ON cr.id = c.role_id
-										WHERE c.person_id = $1`
-
-									rolesRows, err := h.db.Query(rolesQuery, personID)
-									var roles []interface{}
-									if err == nil {
-										defer rolesRows.Close()
-										for rolesRows.Next() {
-											var roleName sql.NullString
-											if err := rolesRows.Scan(&roleName); err == nil && roleName.Valid {
-												roles = append(roles, roleName.String)
-											}
-										}
-									}
-									translator["roles"] = roles
-
-									// Query work count for this person
-									workCountQuery := `
-										SELECT COUNT(DISTINCT pt.work_id)
-										FROM suomisf.part pt
-										INNER JOIN suomisf.contributor c ON pt.id = c.part_id
-										WHERE c.person_id = $1 AND pt.work_id IS NOT NULL`
-
-									var workCount sql.NullInt64
-									if err := h.db.QueryRow(workCountQuery, personID).Scan(&workCount); err == nil && workCount.Valid {
-										translator["workcount"] = int(workCount.Int64)
-									} else {
-										translator["workcount"] = 0
-									}
-
-									// Query story count for this person
-									storyCountQuery := `
-										SELECT COUNT(DISTINCT pt.shortstory_id)
-										FROM suomisf.part pt
-										INNER JOIN suomisf.contributor c ON pt.id = c.part_id
-										WHERE c.person_id = $1 AND pt.shortstory_id IS NOT NULL`
-
-									var storyCount sql.NullInt64
-									if err := h.db.QueryRow(storyCountQuery, personID).Scan(&storyCount); err == nil && storyCount.Valid {
-										translator["storycount"] = int(storyCount.Int64)
-									} else {
-										translator["storycount"] = 0
-									}
-
-									translators = append(translators, translator)
-								}
-							}
-						}
-						if len(translators) == 0 {
-							edition["translators"] = []interface{}{}
-						} else {
-							edition["translators"] = translators
-						}
-
-						// Query edition owners
-						ownersQuery := `
-							SELECT u.id, u.name
-							FROM suomisf."user" u
-							INNER JOIN suomisf.userbook ub ON u.id = ub.user_id
-							WHERE ub.edition_id = $1
-							ORDER BY u.name`
-
-						ownersRows, err := h.db.Query(ownersQuery, int(editionID.Int64))
-						var owners []map[string]interface{}
-						if err == nil {
-							defer ownersRows.Close()
-							for ownersRows.Next() {
-								var owner map[string]interface{} = make(map[string]interface{})
-								var ownerID int
-								var ownerName sql.NullString
-
-								err := ownersRows.Scan(&ownerID, &ownerName)
-								if err == nil {
-									owner["id"] = ownerID
-									if ownerName.Valid {
-										owner["name"] = ownerName.String
-									}
-									owners = append(owners, owner)
-								}
-							}
-						}
-						if len(owners) == 0 {
-							edition["owners"] = nil
-						} else {
-							edition["owners"] = owners
-						}
-
-						// Initialize other arrays for now
-						edition["editors"] = []interface{}{}
-						edition["wishlisted"] = []interface{}{}
-
-						editions = append(editions, edition)
-					}
-					println("Found", editionCount, "editions for work", workID)
-				}
-				work["editions"] = editions
+				// Get editions for this work using extracted function
+				work["editions"] = h.getEditionsForWork(workID)
 
 				// Query work contributions (contributors) - only role_ids 1 and 3
 				contributionsQuery := `
@@ -1254,4 +841,283 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+// getEditionsForWork extracts and returns editions data for a given work ID
+func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
+	// Query editions for this work through the part table
+	editionsQuery := `
+		SELECT e.id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn,
+		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
+		       e.coverimage, e.misc, e.imported_string, e.verified,
+		       p.id as publisher_id, p.name as publisher_name
+		FROM suomisf.edition e
+		INNER JOIN suomisf.part pt ON e.id = pt.edition_id
+		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
+		WHERE pt.work_id = $1
+		ORDER BY e.pubyear, e.editionnum`
+
+	editionsRows, err := h.db.Query(editionsQuery, workID)
+	editions := make([]map[string]interface{}, 0) // Initialize as empty slice
+	if err != nil {
+		// Log the error for debugging
+		println("Editions query error:", err.Error())
+		return []map[string]interface{}{} // Return empty array
+	}
+	defer editionsRows.Close()
+
+	editionCount := 0
+	for editionsRows.Next() {
+		editionCount++
+		var edition map[string]interface{} = make(map[string]interface{})
+		var editionID, pubyear, editionnum, version, pubseriesnum, pages, size, dustcover, coverimage sql.NullInt64
+		var publisherID sql.NullInt64
+		var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName sql.NullString
+		var verified sql.NullBool
+
+		err := editionsRows.Scan(&editionID, &eTitle, &eSubtitle, &pubyear, &editionnum, &version,
+			&isbn, &printedin, &pubseriesnum, &collInfo, &pages, &size, &dustcover, &coverimage,
+			&misc, &importedString, &verified, &publisherID, &publisherName)
+		if err != nil {
+			println("Edition scan error:", err.Error())
+			continue
+		}
+		if editionID.Valid {
+			edition["id"] = int(editionID.Int64)
+		}
+		if eTitle.Valid {
+			edition["title"] = eTitle.String
+		}
+		if eSubtitle.Valid {
+			edition["subtitle"] = eSubtitle.String
+		} else {
+			edition["subtitle"] = ""
+		}
+		if pubyear.Valid {
+			edition["pubyear"] = int(pubyear.Int64)
+		}
+		if editionnum.Valid {
+			edition["editionnum"] = int(editionnum.Int64)
+		}
+		if version.Valid {
+			edition["version"] = int(version.Int64)
+		} else {
+			edition["version"] = nil
+		}
+		if isbn.Valid {
+			edition["isbn"] = isbn.String
+		}
+		if printedin.Valid {
+			edition["printedin"] = printedin.String
+		} else {
+			edition["printedin"] = nil
+		}
+		if pubseriesnum.Valid {
+			edition["pubseriesnum"] = int(pubseriesnum.Int64)
+		} else {
+			edition["pubseriesnum"] = nil
+		}
+		if collInfo.Valid {
+			edition["coll_info"] = collInfo.String
+		} else {
+			edition["coll_info"] = ""
+		}
+		if pages.Valid {
+			edition["pages"] = int(pages.Int64)
+		}
+		if size.Valid {
+			edition["size"] = int(size.Int64)
+		}
+		if dustcover.Valid {
+			edition["dustcover"] = int(dustcover.Int64)
+		}
+		if coverimage.Valid {
+			edition["coverimage"] = int(coverimage.Int64)
+		}
+		if misc.Valid {
+			edition["misc"] = misc.String
+		} else {
+			edition["misc"] = nil
+		}
+		if importedString.Valid {
+			edition["imported_string"] = importedString.String
+		} else {
+			edition["imported_string"] = ""
+		}
+		if verified.Valid {
+			edition["verified"] = verified.Bool
+		} else {
+			edition["verified"] = false
+		}
+
+		// Add publisher info as nested object
+		if publisherID.Valid && publisherName.Valid {
+			edition["publisher"] = map[string]interface{}{
+				"id":   int(publisherID.Int64),
+				"name": publisherName.String,
+			}
+		}
+
+		// Query edition contributions through part table - only role_ids 2, 4, 5
+		editionContributionsQuery := `
+			SELECT DISTINCT p.id, p.name, p.alt_name, cr.id as role_id, cr.name as role_name,
+			       c.description, c.real_person_id, rp.name as real_person_name
+			FROM suomisf.part pt
+			INNER JOIN suomisf.contributor c ON pt.id = c.part_id
+			INNER JOIN suomisf.person p ON c.person_id = p.id
+			INNER JOIN suomisf.contributorrole cr ON c.role_id = cr.id
+			LEFT JOIN suomisf.person rp ON c.real_person_id = rp.id
+			WHERE pt.edition_id = $1 AND cr.id IN (2, 4, 5)
+			ORDER BY p.name`
+
+		editionContribRows, err := h.db.Query(editionContributionsQuery, int(editionID.Int64))
+		editionContributions := make([]map[string]interface{}, 0) // Initialize as empty slice
+		if err == nil {
+			defer editionContribRows.Close()
+			for editionContribRows.Next() {
+				var contrib map[string]interface{} = make(map[string]interface{})
+				var personID, roleID int
+				var personName, personAltName, roleName, description, realPersonName sql.NullString
+				var realPersonID sql.NullInt64
+
+				err := editionContribRows.Scan(&personID, &personName, &personAltName, &roleID, &roleName,
+					&description, &realPersonID, &realPersonName)
+				if err == nil {
+					// Person object
+					person := map[string]interface{}{
+						"id": personID,
+					}
+					if personName.Valid {
+						person["name"] = personName.String
+					}
+					if personAltName.Valid {
+						person["alt_name"] = personAltName.String
+					}
+					contrib["person"] = person
+
+					// Role object
+					if roleName.Valid {
+						contrib["role"] = map[string]interface{}{
+							"id":   roleID,
+							"name": roleName.String,
+						}
+					}
+
+					// Description
+					if description.Valid {
+						contrib["description"] = description.String
+					} else {
+						contrib["description"] = nil
+					}
+
+					// Real person (if exists)
+					if realPersonID.Valid && realPersonName.Valid {
+						contrib["real_person"] = map[string]interface{}{
+							"id":   int(realPersonID.Int64),
+							"name": realPersonName.String,
+						}
+					} else {
+						contrib["real_person"] = nil
+					}
+
+					editionContributions = append(editionContributions, contrib)
+				}
+			}
+		}
+		edition["contributions"] = editionContributions
+
+		// Query edition images
+		imagesQuery := `
+			SELECT id, image_src, image_attr
+			FROM suomisf.editionimage
+			WHERE edition_id = $1
+			ORDER BY id`
+
+		imagesRows, err := h.db.Query(imagesQuery, int(editionID.Int64))
+		images := make([]map[string]interface{}, 0) // Initialize as empty slice
+		if err == nil {
+			defer imagesRows.Close()
+			for imagesRows.Next() {
+				var image map[string]interface{} = make(map[string]interface{})
+				var imageID int
+				var imageSrc, imageAttr sql.NullString
+
+				err := imagesRows.Scan(&imageID, &imageSrc, &imageAttr)
+				if err == nil {
+					image["id"] = imageID
+					if imageSrc.Valid {
+						image["image_src"] = imageSrc.String
+					}
+					if imageAttr.Valid {
+						image["image_attr"] = imageAttr.String
+					} else {
+						image["image_attr"] = nil
+					}
+					images = append(images, image)
+				}
+			}
+		}
+		edition["images"] = images
+
+		// Query edition owners (condition_id < 6)
+		ownersQuery := `
+			SELECT u.id, u.name
+			FROM suomisf."user" u
+			INNER JOIN suomisf.userbook ub ON u.id = ub.user_id
+			WHERE ub.edition_id = $1 AND ub.condition_id < 6
+			ORDER BY u.name`
+
+		ownersRows, err := h.db.Query(ownersQuery, int(editionID.Int64))
+		edition["owners"] = make([]map[string]interface{}, 0) // Initialize as empty slice
+		if err == nil {
+			defer ownersRows.Close()
+			for ownersRows.Next() {
+				var owner map[string]interface{} = make(map[string]interface{})
+				var ownerID int
+				var ownerName sql.NullString
+
+				err := ownersRows.Scan(&ownerID, &ownerName)
+				if err == nil {
+					owner["id"] = ownerID
+					if ownerName.Valid {
+						owner["name"] = ownerName.String
+					}
+					edition["owners"] = append(edition["owners"].([]map[string]interface{}), owner)
+				}
+			}
+		}
+
+		// Query edition wishlisted users (condition_id == 6)
+		wishlistedQuery := `
+			SELECT u.id, u.name
+			FROM suomisf."user" u
+			INNER JOIN suomisf.userbook ub ON u.id = ub.user_id
+			WHERE ub.edition_id = $1 AND ub.condition_id = 6
+			ORDER BY u.name`
+
+		wishlistedRows, err := h.db.Query(wishlistedQuery, int(editionID.Int64))
+		edition["wishlisted"] = make([]map[string]interface{}, 0) // Initialize as empty slice
+		if err == nil {
+			defer wishlistedRows.Close()
+			for wishlistedRows.Next() {
+				var wishlisted map[string]interface{} = make(map[string]interface{})
+				var wishlistedID int
+				var wishlistedName sql.NullString
+
+				err := wishlistedRows.Scan(&wishlistedID, &wishlistedName)
+				if err == nil {
+					wishlisted["id"] = wishlistedID
+					if wishlistedName.Valid {
+						wishlisted["name"] = wishlistedName.String
+					}
+					edition["wishlisted"] = append(edition["wishlisted"].([]map[string]interface{}), wishlisted)
+				}
+			}
+		}
+
+		editions = append(editions, edition)
+	}
+	println("Found", editionCount, "editions for work", workID)
+
+	return editions
 }
