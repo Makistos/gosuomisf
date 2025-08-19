@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,14 +28,18 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 
 	offset := (query.Page - 1) * query.PageSize
 
-	baseQuery := `SELECT id, work_id, title, subtitle, publisher, publ_year, isbn, pages, format, description, created_at, updated_at FROM editions`
-	countQuery := `SELECT COUNT(*) FROM editions`
+	baseQuery := `SELECT e.id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn, e.pages, e.dustcover, e.coverimage,
+		e.pubseriesnum, e.coll_info, e.verified, e.imported_string, e.misc, e.size,
+		p.id as publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description
+		FROM suomisf.edition e
+		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id`
+	countQuery := `SELECT COUNT(*) FROM suomisf.edition e`
 
 	var args []interface{}
 	var whereClause string
 
 	if query.Search != "" {
-		whereClause = " WHERE title LIKE ? OR publisher LIKE ? OR isbn LIKE ?"
+		whereClause = " WHERE e.title LIKE $1 OR p.name LIKE $2 OR e.isbn LIKE $3"
 		searchTerm := "%" + query.Search + "%"
 		args = append(args, searchTerm, searchTerm, searchTerm)
 		baseQuery += whereClause
@@ -43,13 +49,13 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 	orderClause := " ORDER BY "
 	switch query.Sort {
 	case "title":
-		orderClause += "title"
+		orderClause += "e.title"
 	case "year":
-		orderClause += "publ_year"
+		orderClause += "e.pubyear"
 	case "publisher":
-		orderClause += "publisher"
+		orderClause += "p.name"
 	default:
-		orderClause += "created_at"
+		orderClause += "e.id"
 	}
 
 	if query.Order == "desc" {
@@ -58,11 +64,15 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 		orderClause += " ASC"
 	}
 
-	baseQuery += orderClause + " LIMIT ? OFFSET ?"
+	argCount := len(args)
+	baseQuery += orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount+1, argCount+2)
 	args = append(args, query.PageSize, offset)
 
 	var total int
-	countArgs := args[:len(args)-2] // Remove limit and offset
+	var countArgs []interface{}
+	if query.Search != "" {
+		countArgs = args[:len(args)-2] // Remove limit and offset
+	}
 	err := h.db.QueryRow(countQuery, countArgs...).Scan(&total)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get total count"})
@@ -79,15 +89,107 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 	var editions []models.Edition
 	for rows.Next() {
 		var edition models.Edition
+		var eTitle, eSubtitle, isbn, pubSeriesNum, collInfo, importedString, misc sql.NullString
+		var pubYear, version, pages, dustCover, coverImage, size sql.NullInt64
+		var editionNum int64
+		var publisherID sql.NullInt64
+		var publisherName, publisherFullname, publisherDescription sql.NullString
+		var verified sql.NullBool
+
 		err := rows.Scan(
-			&edition.ID, &edition.WorkID, &edition.Title, &edition.Subtitle,
-			&edition.Publisher, &edition.PublYear, &edition.ISBN, &edition.Pages,
-			&edition.Format, &edition.Description, &edition.CreatedAt, &edition.UpdatedAt,
+			&edition.ID, &eTitle, &eSubtitle, &pubYear, &editionNum, &version, &isbn, &pages, &dustCover, &coverImage,
+			&pubSeriesNum, &collInfo, &verified, &importedString, &misc, &size,
+			&publisherID, &publisherName, &publisherFullname, &publisherDescription,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan edition"})
 			return
 		}
+
+		// Handle nullable fields
+		if eTitle.Valid {
+			edition.Title = &eTitle.String
+		}
+		if eSubtitle.Valid {
+			edition.Subtitle = &eSubtitle.String
+		}
+		if pubYear.Valid {
+			year := int(pubYear.Int64)
+			edition.PubYear = &year
+		}
+		// EditionNum should always have a value, default to 1 if 0
+		if editionNum == 0 {
+			editionNum = 1
+		}
+		num := int(editionNum)
+		edition.EditionNum = &num
+		if version.Valid {
+			ver := int(version.Int64)
+			edition.Version = &ver
+		}
+		if isbn.Valid {
+			edition.ISBN = &isbn.String
+		}
+		if pages.Valid {
+			p := int(pages.Int64)
+			edition.Pages = &p
+		}
+		if dustCover.Valid {
+			dc := int(dustCover.Int64)
+			edition.DustCover = &dc
+		}
+		if coverImage.Valid {
+			ci := int(coverImage.Int64)
+			edition.CoverImage = &ci
+		}
+		if pubSeriesNum.Valid {
+			edition.PubSeriesNum = &pubSeriesNum.String
+		}
+		if collInfo.Valid {
+			edition.CollInfo = &collInfo.String
+		}
+		if verified.Valid {
+			edition.Verified = &verified.Bool
+		}
+		if importedString.Valid {
+			edition.ImportedString = &importedString.String
+		}
+		if misc.Valid {
+			edition.Misc = &misc.String
+		}
+		if size.Valid {
+			s := int(size.Int64)
+			edition.Size = &s
+		}
+
+		// Create publisher object if publisher data exists
+		if publisherID.Valid {
+			publisher := make(map[string]interface{})
+			publisher["id"] = int(publisherID.Int64)
+
+			if publisherName.Valid {
+				publisher["name"] = publisherName.String
+			} else {
+				publisher["name"] = nil
+			}
+
+			if publisherFullname.Valid {
+				publisher["fullname"] = publisherFullname.String
+			} else {
+				publisher["fullname"] = nil
+			}
+
+			if publisherDescription.Valid {
+				publisher["description"] = publisherDescription.String
+			} else {
+				publisher["description"] = nil
+			}
+
+			edition.Publisher = &publisher
+		} else {
+			edition.Publisher = nil
+		}
+
 		editions = append(editions, edition)
 	}
 
@@ -112,15 +214,122 @@ func (h *EditionHandler) GetEdition(c *gin.Context) {
 	}
 
 	var edition models.Edition
-	query := `SELECT id, work_id, title, subtitle, publisher, publ_year, isbn, pages, format, description, created_at, updated_at FROM editions WHERE id = ?`
+	var eTitle, eSubtitle, isbn, printedIn, pubSeriesNum, collInfo sql.NullString
+	var misc, importedString, publisherName, publisherFullname, publisherDescription sql.NullString
+	var workID, pubYear, version, pages, size, dustCover, coverImage sql.NullInt64
+	var editionNum int64
+	var publisherID sql.NullInt64
+	var verified sql.NullBool
+
+	query := `
+		SELECT e.id, pt.work_id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn,
+		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
+		       e.coverimage, e.misc, e.imported_string, e.verified,
+		       e.publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description
+		FROM suomisf.edition e
+		LEFT JOIN suomisf.part pt ON e.id = pt.edition_id
+		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
+		WHERE e.id = $1`
+
 	err = h.db.QueryRow(query, editionID).Scan(
-		&edition.ID, &edition.WorkID, &edition.Title, &edition.Subtitle,
-		&edition.Publisher, &edition.PublYear, &edition.ISBN, &edition.Pages,
-		&edition.Format, &edition.Description, &edition.CreatedAt, &edition.UpdatedAt,
+		&edition.ID, &workID, &eTitle, &eSubtitle, &pubYear, &editionNum, &version,
+		&isbn, &printedIn, &pubSeriesNum, &collInfo, &pages, &size, &dustCover,
+		&coverImage, &misc, &importedString, &verified, &publisherID, &publisherName, &publisherFullname, &publisherDescription,
 	)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Edition not found"})
 		return
+	}
+
+	// Handle nullable fields
+	if workID.Valid {
+		wid := int(workID.Int64)
+		edition.WorkID = &wid
+	}
+	if eTitle.Valid {
+		edition.Title = &eTitle.String
+	}
+	if eSubtitle.Valid {
+		edition.Subtitle = &eSubtitle.String
+	}
+	if pubYear.Valid {
+		year := int(pubYear.Int64)
+		edition.PubYear = &year
+	}
+	// EditionNum should always have a value, default to 1 if 0
+	if editionNum == 0 {
+		editionNum = 1
+	}
+	num := int(editionNum)
+	edition.EditionNum = &num
+	if version.Valid {
+		ver := int(version.Int64)
+		edition.Version = &ver
+	}
+	if isbn.Valid {
+		edition.ISBN = &isbn.String
+	}
+	if printedIn.Valid {
+		edition.PrintedIn = &printedIn.String
+	}
+	if pubSeriesNum.Valid {
+		edition.PubSeriesNum = &pubSeriesNum.String
+	}
+	if collInfo.Valid {
+		edition.CollInfo = &collInfo.String
+	}
+	if pages.Valid {
+		p := int(pages.Int64)
+		edition.Pages = &p
+	}
+	if size.Valid {
+		s := int(size.Int64)
+		edition.Size = &s
+	}
+	if dustCover.Valid {
+		dc := int(dustCover.Int64)
+		edition.DustCover = &dc
+	}
+	if coverImage.Valid {
+		ci := int(coverImage.Int64)
+		edition.CoverImage = &ci
+	}
+	if misc.Valid {
+		edition.Misc = &misc.String
+	}
+	if importedString.Valid {
+		edition.ImportedString = &importedString.String
+	}
+	if verified.Valid {
+		edition.Verified = &verified.Bool
+	}
+
+	// Create publisher object if publisher data exists
+	if publisherID.Valid {
+		publisher := make(map[string]interface{})
+		publisher["id"] = int(publisherID.Int64)
+
+		if publisherName.Valid {
+			publisher["name"] = publisherName.String
+		} else {
+			publisher["name"] = nil
+		}
+
+		if publisherFullname.Valid {
+			publisher["fullname"] = publisherFullname.String
+		} else {
+			publisher["fullname"] = nil
+		}
+
+		if publisherDescription.Valid {
+			publisher["description"] = publisherDescription.String
+		} else {
+			publisher["description"] = nil
+		}
+
+		edition.Publisher = &publisher
+	} else {
+		edition.Publisher = nil
 	}
 
 	c.JSON(http.StatusOK, edition)

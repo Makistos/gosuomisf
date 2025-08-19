@@ -1,2 +1,5 @@
 - Always after creating new end points you MUST run ./run-tests.sh to verify everything still works including the newly created end point
 - Always check Go formatting before submitting changes to GitHub
+- You CAN build application without permission from user
+- You CAN start application without permission from user
+- You CAN run curl command without permission from user
