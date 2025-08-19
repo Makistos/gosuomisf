@@ -183,6 +183,11 @@ func (h *WorkHandler) GetWorks(c *gin.Context) {
 }
 
 func (h *WorkHandler) GetWork(c *gin.Context) {
+	if h.db == nil || h.db.DB == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not available"})
+		return
+	}
+
 	workID, err := strconv.Atoi(c.Param("workId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid work ID"})

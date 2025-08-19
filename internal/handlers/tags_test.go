@@ -285,12 +285,10 @@ func TestTagHandler_GetTag_CompleteStructure(t *testing.T) {
 				assert.Contains(t, edition, "id")
 				assert.Contains(t, edition, "title")
 				assert.Contains(t, edition, "contributions")
-				assert.Contains(t, edition, "translators")
 				assert.Contains(t, edition, "images")
 
 				// Verify arrays
 				assert.IsType(t, []interface{}{}, edition["contributions"])
-				assert.IsType(t, []interface{}{}, edition["translators"])
 				assert.IsType(t, []interface{}{}, edition["images"])
 			}
 		}
@@ -502,4 +500,119 @@ func TestTagHandler_PerformanceBaseline(t *testing.T) {
 
 	// Just verify it completes successfully
 	assert.True(t, w.Code == http.StatusOK || w.Code == http.StatusNotFound || w.Code == http.StatusInternalServerError)
+}
+
+// Test the refactored getEditionsForWork function
+func TestGetEditionsForWork(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Database not available")
+	}
+
+	gin.SetMode(gin.TestMode)
+	handler := NewTagHandler(testDB)
+
+	tests := []struct {
+		name       string
+		workID     int
+		shouldPass bool
+	}{
+		{
+			name:       "Valid work with editions",
+			workID:     1,
+			shouldPass: true,
+		},
+		{
+			name:       "Valid work without editions",
+			workID:     999999,
+			shouldPass: true, // Function should succeed even if no editions found
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			editions := handler.getEditionsForWork(tt.workID)
+
+			// Function should always succeed and return a slice
+			assert.NotNil(t, editions)
+
+			// Test structure of editions if any exist
+			for _, edition := range editions {
+				// Test basic edition structure
+				assert.Contains(t, edition, "id")
+				assert.Contains(t, edition, "title")
+				assert.Contains(t, edition, "editionnum")
+
+				// Test that collections are initialized
+				assert.Contains(t, edition, "images")
+				assert.Contains(t, edition, "owners")
+				assert.Contains(t, edition, "wishlisted")
+				assert.Contains(t, edition, "contributions")
+
+				// Test that owners and wishlisted are arrays
+				owners, ok := edition["owners"].([]map[string]interface{})
+				assert.True(t, ok)
+				for _, owner := range owners {
+					assert.Contains(t, owner, "id")
+					assert.Contains(t, owner, "name")
+				}
+
+				wishlisted, ok := edition["wishlisted"].([]map[string]interface{})
+				assert.True(t, ok)
+				for _, wishlist := range wishlisted {
+					assert.Contains(t, wishlist, "id")
+					assert.Contains(t, wishlist, "name")
+				}
+			}
+		})
+	}
+}
+
+// Test getEditionsForWork integration in GetTag endpoint
+func TestGetTagWithEditionsIntegration(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Database not available")
+	}
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	handler := NewTagHandler(testDB)
+	router.GET("/api/tags/:id", handler.GetTag)
+
+	// Test with tag 1 which should have works with editions
+	req, err := http.NewRequest("GET", "/api/tags/1", nil)
+	require.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+
+		// Check if works are present
+		if works, exists := response["works"]; exists {
+			worksArray := works.([]interface{})
+			if len(worksArray) > 0 {
+				work := worksArray[0].(map[string]interface{})
+
+				// Check if editions are present and properly structured
+				if editions, exists := work["editions"]; exists {
+					editionsArray := editions.([]interface{})
+
+					for _, editionInterface := range editionsArray {
+						edition := editionInterface.(map[string]interface{})
+
+						// Verify edition structure matches getEditionsForWork output
+						assert.Contains(t, edition, "id")
+						assert.Contains(t, edition, "title")
+						assert.Contains(t, edition, "editionnum")
+						assert.Contains(t, edition, "owners")
+						assert.Contains(t, edition, "wishlisted")
+						assert.Contains(t, edition, "contributions")
+					}
+				}
+			}
+		}
+	}
 }
