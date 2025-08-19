@@ -13,13 +13,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// getValidWorkID returns a valid work ID from the database, or skips the test if none found
+func getValidWorkID(t *testing.T) string {
+	if testDB == nil {
+		t.Skip("Database not available")
+	}
+
+	var workID int
+	row := testDB.DB.QueryRow("SELECT id FROM suomisf.work LIMIT 1")
+	err := row.Scan(&workID)
+	if err != nil {
+		t.Skip("No works found in database")
+	}
+	return fmt.Sprintf("%d", workID)
+}
+
 func TestWorkHandler_NilDatabase(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	handler := NewWorkHandler(nil) // Test with nil database
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	req, err := http.NewRequest("GET", "/api/works/999", nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -39,6 +54,8 @@ func TestGetWork(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
+	validWorkID := getValidWorkID(t)
+
 	tests := []struct {
 		name           string
 		workId         string
@@ -47,7 +64,7 @@ func TestGetWork(t *testing.T) {
 	}{
 		{
 			name:           "Valid work ID",
-			workId:         "1",
+			workId:         validWorkID,
 			expectedStatus: http.StatusOK,
 			shouldHaveBody: true,
 		},
@@ -176,7 +193,8 @@ func TestGetWorkEditions(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	validWorkID := getValidWorkID(t)
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -228,7 +246,8 @@ func TestGetWorkGenres(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	validWorkID := getValidWorkID(t)
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -261,7 +280,8 @@ func TestGetWorkTags(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	validWorkID := getValidWorkID(t)
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -294,7 +314,8 @@ func TestGetWorkLinks(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	validWorkID := getValidWorkID(t)
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -399,7 +420,8 @@ func TestGetWorkContributions(t *testing.T) {
 	handler := NewWorkHandler(testDB)
 	router.GET("/api/works/:workId", handler.GetWork)
 
-	req, err := http.NewRequest("GET", "/api/works/1", nil)
+	validWorkID := getValidWorkID(t)
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -479,6 +501,15 @@ func BenchmarkGetWork(b *testing.B) {
 		b.Skip("Database not available")
 	}
 
+	// Get a valid work ID for benchmarking
+	var workID int
+	row := testDB.DB.QueryRow("SELECT id FROM suomisf.work LIMIT 1")
+	err := row.Scan(&workID)
+	if err != nil {
+		b.Skip("No works found in database")
+	}
+	validWorkID := fmt.Sprintf("%d", workID)
+
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	handler := NewWorkHandler(testDB)
@@ -486,7 +517,7 @@ func BenchmarkGetWork(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		req, _ := http.NewRequest("GET", "/api/works/1", nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/works/%s", validWorkID), nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 	}
