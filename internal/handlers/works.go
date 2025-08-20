@@ -316,7 +316,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 			Images:        make([]map[string]interface{}, 0), // Initialize as empty slice
 			Owners:        make([]map[string]interface{}, 0), // Initialize as empty slice
 			Wishlisted:    make([]map[string]interface{}, 0), // Initialize as empty slice
-			Contributions: make([]map[string]interface{}, 0), // Initialize as empty slice
+			Contributions: make([]models.Contributor, 0),     // Initialize as empty slice
 		}
 		if work.PubYear != nil {
 			defaultEdition.PubYear = work.PubYear
@@ -533,11 +533,10 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				ORDER BY p.name`
 
 			editionContribRows, err := h.db.Query(editionContributionsQuery, edition.ID)
-			edition.Contributions = make([]map[string]interface{}, 0) // Initialize as empty slice
+			edition.Contributions = make([]models.Contributor, 0) // Initialize as empty slice
 			if err == nil {
 				defer editionContribRows.Close()
 				for editionContribRows.Next() {
-					var contrib map[string]interface{} = make(map[string]interface{})
 					var personID, roleID int
 					var personName, personAltName, roleName, description, realPersonName sql.NullString
 					var realPersonID sql.NullInt64
@@ -545,41 +544,29 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 					err := editionContribRows.Scan(&personID, &personName, &personAltName, &roleID, &roleName,
 						&description, &realPersonID, &realPersonName)
 					if err == nil {
-						// Person object
-						person := map[string]interface{}{
-							"id": personID,
-						}
-						if personName.Valid {
-							person["name"] = personName.String
+						// Create PersonSummary
+						person := &models.PersonSummary{
+							ID:   personID,
+							Name: personName.String,
 						}
 						if personAltName.Valid {
-							person["alt_name"] = personAltName.String
+							person.AltName = personAltName.String
 						}
-						contrib["person"] = person
 
-						// Role object
+						// Create Contributor
+						contrib := models.Contributor{
+							Person: *person,
+						}
+
 						if roleName.Valid {
-							contrib["role"] = map[string]interface{}{
-								"id":   roleID,
-								"name": roleName.String,
+							contrib.Role = &models.Role{
+								ID:   roleID,
+								Name: roleName.String,
 							}
 						}
 
-						// Description
 						if description.Valid {
-							contrib["description"] = description.String
-						} else {
-							contrib["description"] = nil
-						}
-
-						// Real person (if exists)
-						if realPersonID.Valid && realPersonName.Valid {
-							contrib["real_person"] = map[string]interface{}{
-								"id":   int(realPersonID.Int64),
-								"name": realPersonName.String,
-							}
-						} else {
-							contrib["real_person"] = nil
+							contrib.Description = &description.String
 						}
 
 						edition.Contributions = append(edition.Contributions, contrib)
@@ -598,7 +585,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				Images:        make([]map[string]interface{}, 0), // Initialize as empty slice
 				Owners:        make([]map[string]interface{}, 0), // Initialize as empty slice
 				Wishlisted:    make([]map[string]interface{}, 0), // Initialize as empty slice
-				Contributions: make([]map[string]interface{}, 0), // Initialize as empty slice
+				Contributions: make([]models.Contributor, 0), // Initialize as empty slice
 			}
 			if work.PubYear != nil {
 				defaultEdition.PubYear = work.PubYear
@@ -620,11 +607,10 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		ORDER BY p.name`
 
 	contributionsRows, err := h.db.Query(contributionsQuery, workID)
-	work.Contributions = make([]map[string]interface{}, 0) // Initialize as empty slice
+	work.Contributions = make([]models.Contributor, 0) // Initialize as empty slice
 	if err == nil {
 		defer contributionsRows.Close()
 		for contributionsRows.Next() {
-			var contribution map[string]interface{} = make(map[string]interface{})
 			var personID, roleID int
 			var personName, personAltName, roleName, description, realPersonName sql.NullString
 			var realPersonID sql.NullInt64
@@ -632,41 +618,41 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 			err := contributionsRows.Scan(&personID, &personName, &personAltName, &roleID, &roleName,
 				&description, &realPersonID, &realPersonName)
 			if err == nil {
-				// Person object
-				person := map[string]interface{}{
-					"id": personID,
+				// Create PersonSummary
+				person := models.PersonSummary{
+					ID: personID,
 				}
 				if personName.Valid {
-					person["name"] = personName.String
+					person.Name = personName.String
 				}
 				if personAltName.Valid {
-					person["alt_name"] = personAltName.String
+					person.AltName = personAltName.String
 				}
-				contribution["person"] = person
 
-				// Role object
+				// Create Contributor
+				contribution := models.Contributor{
+					Person: person,
+				}
+
+				// Set role
 				if roleName.Valid {
-					contribution["role"] = map[string]interface{}{
-						"id":   roleID,
-						"name": roleName.String,
+					contribution.Role = &models.Role{
+						ID:   roleID,
+						Name: roleName.String,
 					}
 				}
 
-				// Description
+				// Set description
 				if description.Valid {
-					contribution["description"] = description.String
-				} else {
-					contribution["description"] = nil
+					contribution.Description = &description.String
 				}
 
-				// Real person (if exists)
+				// Set real person if exists
 				if realPersonID.Valid && realPersonName.Valid {
-					contribution["real_person"] = map[string]interface{}{
-						"id":   int(realPersonID.Int64),
-						"name": realPersonName.String,
+					contribution.RealPerson = &models.PersonSummary{
+						ID:   int(realPersonID.Int64),
+						Name: realPersonName.String,
 					}
-				} else {
-					contribution["real_person"] = nil
 				}
 
 				work.Contributions = append(work.Contributions, contribution)

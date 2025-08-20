@@ -447,26 +447,17 @@ func TestGetWorkContributions(t *testing.T) {
 		if len(work.Contributions) > 0 {
 			contribution := work.Contributions[0]
 
-			// Test contribution structure
-			assert.Contains(t, contribution, "person")
-			assert.Contains(t, contribution, "role")
-			assert.Contains(t, contribution, "description")
-			assert.Contains(t, contribution, "real_person")
+			// Test contribution structure - person field should exist
+			assert.NotEqual(t, 0, contribution.Person.ID)
+			assert.NotEmpty(t, contribution.Person.Name)
 
-			// Test person object
-			person, ok := contribution["person"].(map[string]interface{})
-			assert.True(t, ok)
-			assert.Contains(t, person, "id")
-			assert.Contains(t, person, "name")
-			assert.Contains(t, person, "alt_name")
+			// Test role object - may be nil
+			if contribution.Role != nil {
+				assert.NotEqual(t, 0, contribution.Role.ID)
+				assert.NotEmpty(t, contribution.Role.Name)
+			}
 
-			// Test role object
-			role, ok := contribution["role"].(map[string]interface{})
-			assert.True(t, ok)
-			assert.Contains(t, role, "id")
-			assert.Contains(t, role, "name")
-
-			// real_person and description can be nil
+			// real_person and description can be nil - test if they exist without asserting values
 		}
 	}
 }

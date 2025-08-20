@@ -71,25 +71,64 @@ type Work struct {
 	Awards          []map[string]interface{} `json:"awards"`
 	Stories         []map[string]interface{} `json:"stories"`
 	Editions        []Edition                `json:"editions,omitempty"`
-	Contributions   []map[string]interface{} `json:"contributions,omitempty"`
+	Contributions   []Contributor            `json:"contributions,omitempty"`
 	Genres          []Genre                  `json:"genres"`
 	Tags            []Tag                    `json:"tags"`
 	Links           []map[string]interface{} `json:"links"`
 }
 
+// WorkSummary represents a work without nested contributors (for use in person details)
+type WorkSummary struct {
+	ID             int     `json:"id" db:"id"`
+	Title          string  `json:"title" db:"title"`
+	Subtitle       *string `json:"subtitle" db:"subtitle"`
+	OrigTitle      *string `json:"orig_title" db:"orig_title"`
+	PubYear        *int    `json:"pubyear" db:"pubyear"`
+	Language       *string `json:"language,omitempty"`
+	Type           *string `json:"type,omitempty"`
+	Description    *string `json:"description" db:"description"`
+	BookseriesName *string `json:"bookseries_name,omitempty"`
+	BookseriesNum  *string `json:"bookseriesnum" db:"bookseriesnum"`
+}
+
 // Person represents an author or other person
 type Person struct {
-	ID          int       `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	AltName     string    `json:"alt_name" db:"alt_name"`
-	FirstName   string    `json:"first_name" db:"first_name"`
-	LastName    string    `json:"last_name" db:"last_name"`
-	DOB         time.Time `json:"dob" db:"dob"`
-	DOD         time.Time `json:"dod" db:"dod"`
-	Bio         string    `json:"bio" db:"bio"`
-	Nationality string    `json:"nationality" db:"nationality"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID          int           `json:"id" db:"id"`
+	Name        string        `json:"name" db:"name"`
+	AltName     string        `json:"alt_name" db:"alt_name"`
+	FirstName   string        `json:"first_name" db:"first_name"`
+	LastName    string        `json:"last_name" db:"last_name"`
+	DOB         time.Time     `json:"dob" db:"dob"`
+	DOD         time.Time     `json:"dod" db:"dod"`
+	Bio         string        `json:"bio" db:"bio"`
+	Nationality string        `json:"nationality" db:"nationality"`
+	CreatedAt   time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at" db:"updated_at"`
+	Works       []WorkSummary `json:"works,omitempty"` // Works without contributors to avoid circular reference
+}
+
+// PersonSummary represents a person without nested works (for use in contributions)
+type PersonSummary struct {
+	ID          int    `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	AltName     string `json:"alt_name" db:"alt_name"`
+	FirstName   string `json:"first_name" db:"first_name"`
+	LastName    string `json:"last_name" db:"last_name"`
+	Nationality string `json:"nationality" db:"nationality"`
+}
+
+// Role represents a contributor role
+type Role struct {
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
+// Contributor represents a person's contribution to a work/edition
+type Contributor struct {
+	Person      PersonSummary  `json:"person"`
+	Role        *Role          `json:"role,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	RealPerson  *PersonSummary `json:"real_person,omitempty"`
 }
 
 // Edition represents a published edition of a work
@@ -116,7 +155,7 @@ type Edition struct {
 	Images         []map[string]interface{} `json:"images"`
 	Owners         []map[string]interface{} `json:"owners"`
 	Wishlisted     []map[string]interface{} `json:"wishlisted"`
-	Contributions  []map[string]interface{} `json:"contributions"`
+	Contributions  []Contributor            `json:"contributions"`
 }
 
 // Short represents a short story
