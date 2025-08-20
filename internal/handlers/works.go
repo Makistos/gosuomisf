@@ -126,8 +126,14 @@ func (h *WorkHandler) GetWorks(c *gin.Context) {
 			languageID := int(languageIDNull.Int32)
 			work.LanguageID = &languageID
 		}
-		if languageNameNull.Valid {
-			work.Language = &languageNameNull.String
+		// Create language object if language data exists
+		if languageIDNull.Valid && languageNameNull.Valid {
+			work.Language = &models.Language{
+				ID:   int(languageIDNull.Int32),
+				Name: languageNameNull.String,
+			}
+		} else {
+			work.Language = nil
 		}
 		if bookseriesIDNull.Valid {
 			bookseriesID := int(bookseriesIDNull.Int32)
@@ -241,9 +247,14 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		languageID := int(languageIDNull.Int32)
 		work.LanguageID = &languageID
 	}
-	if languageNameNull.Valid {
-		work.Language = &languageNameNull.String
-		work.LanguageName = &languageNameNull.String
+	// Create language object if language data exists
+	if languageIDNull.Valid && languageNameNull.Valid {
+		work.Language = &models.Language{
+			ID:   int(languageIDNull.Int32),
+			Name: languageNameNull.String,
+		}
+	} else {
+		work.Language = nil
 	}
 	if bookseriesIDNull.Valid && bookseriesNameNull.Valid {
 		bookseriesID := int(bookseriesIDNull.Int32)
@@ -298,11 +309,13 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
 		       e.coverimage, e.misc, e.imported_string, e.verified,
 		       p.id as publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description,
-		       bt.id as binding_id, bt.name as binding_name
+		       bt.id as binding_id, bt.name as binding_name,
+		       ps.id as pubseries_id, ps.name as pubseries_name
 		FROM suomisf.edition e
 		INNER JOIN suomisf.part pt ON e.id = pt.edition_id
 		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
 		LEFT JOIN suomisf.bindingtype bt ON e.binding_id = bt.id
+		LEFT JOIN suomisf.pubseries ps ON e.pubseries_id = ps.id
 		WHERE pt.work_id = $1 and pt.shortstory_id IS NULL
 		ORDER BY e.pubyear, e.editionnum`
 
@@ -331,18 +344,18 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		for editionsRows.Next() {
 			editionCount++
 			var edition models.Edition
-			var eTitle, eSubtitle, isbn, printedIn, pubSeriesNum, collInfo sql.NullString
+			var eTitle, eSubtitle, isbn, printedIn, collInfo sql.NullString
 			var misc, importedString, publisherName, publisherFullname, publisherDescription sql.NullString
-			var bindingName sql.NullString
-			var pubYear, version, pages, size, dustCover, coverImage sql.NullInt64
+			var bindingName, pubSeriesName sql.NullString
+			var pubYear, version, pages, size, dustCover, coverImage, pubSeriesNum sql.NullInt64
 			var editionNum int64
-			var publisherID, bindingID sql.NullInt64
+			var publisherID, bindingID, pubSeriesID sql.NullInt64
 			var verified sql.NullBool
 
 			err := editionsRows.Scan(&edition.ID, &eTitle, &eSubtitle, &pubYear, &editionNum, &version,
 				&isbn, &printedIn, &pubSeriesNum, &collInfo, &pages, &size, &dustCover,
 				&coverImage, &misc, &importedString, &verified, &publisherID, &publisherName, &publisherFullname, &publisherDescription,
-				&bindingID, &bindingName)
+				&bindingID, &bindingName, &pubSeriesID, &pubSeriesName)
 
 			if err != nil {
 				continue // Skip this edition if there's an error
@@ -377,7 +390,8 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				edition.PrintedIn = &printedIn.String
 			}
 			if pubSeriesNum.Valid {
-				edition.PubSeriesNum = &pubSeriesNum.String
+				psn := int(pubSeriesNum.Int64)
+				edition.PubSeriesNum = &psn
 			}
 			if collInfo.Valid {
 				edition.CollInfo = &collInfo.String
@@ -444,6 +458,16 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				}
 			} else {
 				edition.Binding = nil
+			}
+
+			// Create pubseries object if pubseries data exists
+			if pubSeriesID.Valid && pubSeriesName.Valid {
+				edition.PubSeries = &models.PubSeries{
+					ID:   int(pubSeriesID.Int64),
+					Name: pubSeriesName.String,
+				}
+			} else {
+				edition.PubSeries = nil
 			}
 
 			// Query edition images

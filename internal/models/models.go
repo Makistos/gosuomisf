@@ -46,6 +46,11 @@ type Genre struct {
 	Works        []Work `json:"works"`
 }
 
+type Language struct {
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 // Work represents a literary work
 type Work struct {
 	ID              int                      `json:"id" db:"id"`
@@ -54,8 +59,7 @@ type Work struct {
 	OrigTitle       *string                  `json:"orig_title" db:"orig_title"`
 	PubYear         *int                     `json:"pubyear" db:"pubyear"`
 	LanguageID      *int                     `json:"language_id" db:"language"`
-	Language        *string                  `json:"language,omitempty"`
-	LanguageName    *string                  `json:"language_name,omitempty"`
+	Language        *Language                `json:"language_name,omitempty"`
 	BookseriesID    *int                     `json:"bookseries_id" db:"bookseries_id"`
 	Bookseries      *map[string]interface{}  `json:"bookseries,omitempty"`
 	BookseriesName  *string                  `json:"bookseries_name,omitempty"`
@@ -79,16 +83,16 @@ type Work struct {
 
 // WorkSummary represents a work without nested contributors (for use in person details)
 type WorkSummary struct {
-	ID             int     `json:"id" db:"id"`
-	Title          string  `json:"title" db:"title"`
-	Subtitle       *string `json:"subtitle" db:"subtitle"`
-	OrigTitle      *string `json:"orig_title" db:"orig_title"`
-	PubYear        *int    `json:"pubyear" db:"pubyear"`
-	Language       *string `json:"language,omitempty"`
-	Type           *string `json:"type,omitempty"`
-	Description    *string `json:"description" db:"description"`
-	BookseriesName *string `json:"bookseries_name,omitempty"`
-	BookseriesNum  *string `json:"bookseriesnum" db:"bookseriesnum"`
+	ID             int       `json:"id" db:"id"`
+	Title          string    `json:"title" db:"title"`
+	Subtitle       *string   `json:"subtitle" db:"subtitle"`
+	OrigTitle      *string   `json:"orig_title" db:"orig_title"`
+	PubYear        *int      `json:"pubyear" db:"pubyear"`
+	Language       *Language `json:"language_name,omitempty"`
+	Type           *string   `json:"type,omitempty"`
+	Description    *string   `json:"description" db:"description"`
+	BookseriesName *string   `json:"bookseries_name,omitempty"`
+	BookseriesNum  *string   `json:"bookseriesnum" db:"bookseriesnum"`
 }
 
 // Person represents an author or other person
@@ -129,6 +133,12 @@ type Binding struct {
 	Name string `json:"name" db:"name"`
 }
 
+// PubSeries represents a publication series
+type PubSeries struct {
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 // Contributor represents a person's contribution to a work/edition
 type Contributor struct {
 	Person      PersonSummary  `json:"person"`
@@ -148,7 +158,8 @@ type Edition struct {
 	Version        *int                     `json:"version" db:"version"`
 	ISBN           *string                  `json:"isbn,omitempty" db:"isbn"`
 	PrintedIn      *string                  `json:"printedin,omitempty" db:"printedin"`
-	PubSeriesNum   *string                  `json:"pubseriesnum,omitempty" db:"pubseriesnum"`
+	PubSeries      *PubSeries               `json:"pubseries,omitempty"`
+	PubSeriesNum   *int                     `json:"pubseriesnum,omitempty" db:"pubseriesnum"`
 	CollInfo       *string                  `json:"coll_info,omitempty" db:"coll_info"`
 	Pages          *int                     `json:"pages,omitempty" db:"pages"`
 	Size           *int                     `json:"size,omitempty" db:"size"`

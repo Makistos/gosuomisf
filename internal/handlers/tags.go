@@ -257,7 +257,7 @@ func (h *TagHandler) GetTag(c *gin.Context) {
 					work["bookseriesorder"] = nil
 				}
 
-				// Add language_name as nested object to match expected format
+				// Add language as nested object to match expected format
 				if language.Valid && languageName.Valid {
 					if langID, err := strconv.Atoi(language.String); err == nil {
 						work["language_name"] = map[string]interface{}{
@@ -851,11 +851,13 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
 		       e.coverimage, e.misc, e.imported_string, e.verified,
 		       p.id as publisher_id, p.name as publisher_name,
-		       bt.id as binding_id, bt.name as binding_name
+		       bt.id as binding_id, bt.name as binding_name,
+		       ps.id as pubseries_id, ps.name as pubseries_name
 		FROM suomisf.edition e
 		INNER JOIN suomisf.part pt ON e.id = pt.edition_id
 		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
 		LEFT JOIN suomisf.bindingtype bt ON e.binding_id = bt.id
+		LEFT JOIN suomisf.pubseries ps ON e.pubseries_id = ps.id
 		WHERE pt.work_id = $1
 		ORDER BY e.pubyear, e.editionnum`
 
@@ -873,13 +875,14 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 		editionCount++
 		var edition map[string]interface{} = make(map[string]interface{})
 		var editionID, pubyear, editionnum, version, pubseriesnum, pages, size, dustcover, coverimage sql.NullInt64
-		var publisherID, bindingID sql.NullInt64
-		var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName, bindingName sql.NullString
+		var publisherID, bindingID, pubSeriesID sql.NullInt64
+		var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName, bindingName, pubSeriesName sql.NullString
 		var verified sql.NullBool
 
 		err := editionsRows.Scan(&editionID, &eTitle, &eSubtitle, &pubyear, &editionnum, &version,
 			&isbn, &printedin, &pubseriesnum, &collInfo, &pages, &size, &dustcover, &coverimage,
-			&misc, &importedString, &verified, &publisherID, &publisherName, &bindingID, &bindingName)
+			&misc, &importedString, &verified, &publisherID, &publisherName, &bindingID, &bindingName,
+			&pubSeriesID, &pubSeriesName)
 		if err != nil {
 			println("Edition scan error:", err.Error())
 			continue
@@ -968,6 +971,14 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 			edition["binding"] = map[string]interface{}{
 				"id":   int(bindingID.Int64),
 				"name": bindingName.String,
+			}
+		}
+
+		// Add pubseries info as nested object
+		if pubSeriesID.Valid && pubSeriesName.Valid {
+			edition["pubseries"] = map[string]interface{}{
+				"id":   int(pubSeriesID.Int64),
+				"name": pubSeriesName.String,
 			}
 		}
 
