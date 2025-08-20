@@ -13,15 +13,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// getValidWorkID returns a valid work ID from the database, or skips the test if none found
+// getValidWorkID returns a valid work ID from the database that can actually be retrieved by GetWork, or skips the test if none found
 func getValidWorkID(t *testing.T) string {
 	if testDB == nil {
 		t.Skip("Database not available")
 	}
 
+	// Use the exact same query as the GetWork handler to ensure we find a work that can actually be retrieved
 	var workID int
-	row := testDB.DB.QueryRow("SELECT id FROM suomisf.work LIMIT 1")
-	err := row.Scan(&workID)
+	var title string
+	query := `SELECT w.id, w.title
+		FROM work w
+		LEFT JOIN worktype wt ON w.type = wt.id
+		LEFT JOIN language l ON w.language = l.id
+		LEFT JOIN bookseries bs ON w.bookseries_id = bs.id
+		LIMIT 1`
+	
+	row := testDB.DB.QueryRow(query)
+	err := row.Scan(&workID, &title)
 	if err != nil {
 		t.Skip("No works found in database")
 	}
