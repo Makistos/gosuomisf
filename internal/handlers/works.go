@@ -312,7 +312,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 		defaultEdition := models.Edition{
 			ID:            -1, // Use -1 to indicate this is a generated edition
 			Title:         &work.Title,
-			Publisher:     nil, // No publisher for default edition
+			Publisher:     nil,                               // No publisher for default edition
 			Images:        make([]map[string]interface{}, 0), // Initialize as empty slice
 			Owners:        make([]map[string]interface{}, 0), // Initialize as empty slice
 			Wishlisted:    make([]map[string]interface{}, 0), // Initialize as empty slice
@@ -768,7 +768,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 			}
 
 			link := map[string]interface{}{
-				"id":  linkID,
+				"id":   linkID,
 				"link": linkURL,
 			}
 			if linkDesc.Valid {

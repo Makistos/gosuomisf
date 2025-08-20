@@ -41,32 +41,32 @@ type RefreshRequest struct {
 
 // Work represents a literary work
 type Work struct {
-	ID              int       `json:"id" db:"id"`
-	Title           string    `json:"title" db:"title"`
-	Subtitle        *string   `json:"subtitle" db:"subtitle"`
-	OrigTitle       *string   `json:"orig_title" db:"orig_title"`
-	PubYear         *int      `json:"pubyear" db:"pubyear"`
-	LanguageID      *int      `json:"language_id" db:"language"`
-	Language        *string   `json:"language,omitempty"`
-	LanguageName    *string   `json:"language_name,omitempty"`
-	BookseriesID    *int      `json:"bookseries_id" db:"bookseries_id"`
-	Bookseries      *map[string]interface{} `json:"bookseries,omitempty"`
-	BookseriesName  *string   `json:"bookseries_name,omitempty"`
-	BookseriesNum   *string   `json:"bookseriesnum" db:"bookseriesnum"`
-	BookseriesOrder *int      `json:"bookseriesorder" db:"bookseriesorder"`
-	TypeID          *int      `json:"type_id" db:"type"`
-	Type            *string   `json:"type,omitempty"`
-	Misc            *string   `json:"misc" db:"misc"`
-	Description     *string   `json:"description" db:"description"`
-	DescrAttr       *string   `json:"descr_attr" db:"descr_attr"`
-	ImportedString  *string   `json:"imported_string" db:"imported_string"`
-	AuthorStr       *string   `json:"author_str" db:"author_str"`
+	ID              int                      `json:"id" db:"id"`
+	Title           string                   `json:"title" db:"title"`
+	Subtitle        *string                  `json:"subtitle" db:"subtitle"`
+	OrigTitle       *string                  `json:"orig_title" db:"orig_title"`
+	PubYear         *int                     `json:"pubyear" db:"pubyear"`
+	LanguageID      *int                     `json:"language_id" db:"language"`
+	Language        *string                  `json:"language,omitempty"`
+	LanguageName    *string                  `json:"language_name,omitempty"`
+	BookseriesID    *int                     `json:"bookseries_id" db:"bookseries_id"`
+	Bookseries      *map[string]interface{}  `json:"bookseries,omitempty"`
+	BookseriesName  *string                  `json:"bookseries_name,omitempty"`
+	BookseriesNum   *string                  `json:"bookseriesnum" db:"bookseriesnum"`
+	BookseriesOrder *int                     `json:"bookseriesorder" db:"bookseriesorder"`
+	TypeID          *int                     `json:"type_id" db:"type"`
+	Type            *string                  `json:"type,omitempty"`
+	Misc            *string                  `json:"misc" db:"misc"`
+	Description     *string                  `json:"description" db:"description"`
+	DescrAttr       *string                  `json:"descr_attr" db:"descr_attr"`
+	ImportedString  *string                  `json:"imported_string" db:"imported_string"`
+	AuthorStr       *string                  `json:"author_str" db:"author_str"`
 	Awards          []map[string]interface{} `json:"awards"`
 	Stories         []map[string]interface{} `json:"stories"`
-	Editions        []Edition `json:"editions,omitempty"`
+	Editions        []Edition                `json:"editions,omitempty"`
 	Contributions   []map[string]interface{} `json:"contributions,omitempty"`
 	Genres          []map[string]interface{} `json:"genres"`
-	Tags            []Tag     `json:"tags"`
+	Tags            []Tag                    `json:"tags"`
 	Links           []map[string]interface{} `json:"links"`
 }
 
@@ -87,29 +87,29 @@ type Person struct {
 
 // Edition represents a published edition of a work
 type Edition struct {
-	ID              int     `json:"id" db:"id"`
-	WorkID          *int    `json:"work_id,omitempty" db:"work_id"`
-	Title           *string `json:"title,omitempty" db:"title"`
-	Subtitle        *string `json:"subtitle,omitempty" db:"subtitle"`
-	PubYear         *int    `json:"pubyear,omitempty" db:"pubyear"`
-	EditionNum      *int    `json:"editionnum,omitempty" db:"editionnum"`
-	Version         *int    `json:"version" db:"version"`
-	ISBN            *string `json:"isbn,omitempty" db:"isbn"`
-	PrintedIn       *string `json:"printedin,omitempty" db:"printedin"`
-	PubSeriesNum    *string `json:"pubseriesnum,omitempty" db:"pubseriesnum"`
-	CollInfo        *string `json:"coll_info,omitempty" db:"coll_info"`
-	Pages           *int    `json:"pages,omitempty" db:"pages"`
-	Size            *int    `json:"size,omitempty" db:"size"`
-	DustCover       *int    `json:"dustcover,omitempty" db:"dustcover"`
-	CoverImage      *int    `json:"coverimage,omitempty" db:"coverimage"`
-	Misc            *string `json:"misc,omitempty" db:"misc"`
-	ImportedString  *string `json:"imported_string,omitempty" db:"imported_string"`
-	Verified        *bool   `json:"verified,omitempty" db:"verified"`
-	Publisher       *map[string]interface{} `json:"publisher"`
-	Images          []map[string]interface{} `json:"images"`
-	Owners          []map[string]interface{} `json:"owners"`
-	Wishlisted      []map[string]interface{} `json:"wishlisted"`
-	Contributions   []map[string]interface{} `json:"contributions"`
+	ID             int                      `json:"id" db:"id"`
+	WorkID         *int                     `json:"work_id,omitempty" db:"work_id"`
+	Title          *string                  `json:"title,omitempty" db:"title"`
+	Subtitle       *string                  `json:"subtitle,omitempty" db:"subtitle"`
+	PubYear        *int                     `json:"pubyear,omitempty" db:"pubyear"`
+	EditionNum     *int                     `json:"editionnum,omitempty" db:"editionnum"`
+	Version        *int                     `json:"version" db:"version"`
+	ISBN           *string                  `json:"isbn,omitempty" db:"isbn"`
+	PrintedIn      *string                  `json:"printedin,omitempty" db:"printedin"`
+	PubSeriesNum   *string                  `json:"pubseriesnum,omitempty" db:"pubseriesnum"`
+	CollInfo       *string                  `json:"coll_info,omitempty" db:"coll_info"`
+	Pages          *int                     `json:"pages,omitempty" db:"pages"`
+	Size           *int                     `json:"size,omitempty" db:"size"`
+	DustCover      *int                     `json:"dustcover,omitempty" db:"dustcover"`
+	CoverImage     *int                     `json:"coverimage,omitempty" db:"coverimage"`
+	Misc           *string                  `json:"misc,omitempty" db:"misc"`
+	ImportedString *string                  `json:"imported_string,omitempty" db:"imported_string"`
+	Verified       *bool                    `json:"verified,omitempty" db:"verified"`
+	Publisher      *map[string]interface{}  `json:"publisher"`
+	Images         []map[string]interface{} `json:"images"`
+	Owners         []map[string]interface{} `json:"owners"`
+	Wishlisted     []map[string]interface{} `json:"wishlisted"`
+	Contributions  []map[string]interface{} `json:"contributions"`
 }
 
 // Short represents a short story

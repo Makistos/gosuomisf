@@ -28,7 +28,7 @@ func getValidWorkID(t *testing.T) string {
 		LEFT JOIN language l ON w.language = l.id
 		LEFT JOIN bookseries bs ON w.bookseries_id = bs.id
 		LIMIT 1`
-	
+
 	row := testDB.DB.QueryRow(query)
 	err := row.Scan(&workID, &title)
 	if err != nil {

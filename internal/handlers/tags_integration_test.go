@@ -134,7 +134,7 @@ func TestTagHandler_Integration_VerifyDataConsistency(t *testing.T) {
 					for _, field := range editionRequiredFields {
 						assert.Contains(t, edition, field, fmt.Sprintf("Work %d edition missing field %s", i, field))
 					}
-					
+
 					// Verify contributions is an array
 					if contributions, ok := edition["contributions"].([]interface{}); ok {
 						for _, contrib := range contributions {
