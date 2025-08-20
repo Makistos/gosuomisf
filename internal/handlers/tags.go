@@ -850,10 +850,12 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 		SELECT e.id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn,
 		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
 		       e.coverimage, e.misc, e.imported_string, e.verified,
-		       p.id as publisher_id, p.name as publisher_name
+		       p.id as publisher_id, p.name as publisher_name,
+		       bt.id as binding_id, bt.name as binding_name
 		FROM suomisf.edition e
 		INNER JOIN suomisf.part pt ON e.id = pt.edition_id
 		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
+		LEFT JOIN suomisf.bindingtype bt ON e.binding_id = bt.id
 		WHERE pt.work_id = $1
 		ORDER BY e.pubyear, e.editionnum`
 
@@ -871,13 +873,13 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 		editionCount++
 		var edition map[string]interface{} = make(map[string]interface{})
 		var editionID, pubyear, editionnum, version, pubseriesnum, pages, size, dustcover, coverimage sql.NullInt64
-		var publisherID sql.NullInt64
-		var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName sql.NullString
+		var publisherID, bindingID sql.NullInt64
+		var eTitle, eSubtitle, isbn, printedin, collInfo, misc, importedString, publisherName, bindingName sql.NullString
 		var verified sql.NullBool
 
 		err := editionsRows.Scan(&editionID, &eTitle, &eSubtitle, &pubyear, &editionnum, &version,
 			&isbn, &printedin, &pubseriesnum, &collInfo, &pages, &size, &dustcover, &coverimage,
-			&misc, &importedString, &verified, &publisherID, &publisherName)
+			&misc, &importedString, &verified, &publisherID, &publisherName, &bindingID, &bindingName)
 		if err != nil {
 			println("Edition scan error:", err.Error())
 			continue
@@ -958,6 +960,14 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 			edition["publisher"] = map[string]interface{}{
 				"id":   int(publisherID.Int64),
 				"name": publisherName.String,
+			}
+		}
+
+		// Add binding info as nested object
+		if bindingID.Valid && bindingName.Valid {
+			edition["binding"] = map[string]interface{}{
+				"id":   int(bindingID.Int64),
+				"name": bindingName.String,
 			}
 		}
 

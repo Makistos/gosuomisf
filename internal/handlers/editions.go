@@ -30,9 +30,11 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 
 	baseQuery := `SELECT e.id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn, e.pages, e.dustcover, e.coverimage,
 		e.pubseriesnum, e.coll_info, e.verified, e.imported_string, e.misc, e.size,
-		p.id as publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description
+		p.id as publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description,
+		bt.id as binding_id, bt.name as binding_name
 		FROM suomisf.edition e
-		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id`
+		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
+		LEFT JOIN suomisf.bindingtype bt ON e.binding_id = bt.id`
 	countQuery := `SELECT COUNT(*) FROM suomisf.edition e`
 
 	var args []interface{}
@@ -92,14 +94,16 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 		var eTitle, eSubtitle, isbn, pubSeriesNum, collInfo, importedString, misc sql.NullString
 		var pubYear, version, pages, dustCover, coverImage, size sql.NullInt64
 		var editionNum int64
-		var publisherID sql.NullInt64
+		var publisherID, bindingID sql.NullInt64
 		var publisherName, publisherFullname, publisherDescription sql.NullString
+		var bindingName sql.NullString
 		var verified sql.NullBool
 
 		err := rows.Scan(
 			&edition.ID, &eTitle, &eSubtitle, &pubYear, &editionNum, &version, &isbn, &pages, &dustCover, &coverImage,
 			&pubSeriesNum, &collInfo, &verified, &importedString, &misc, &size,
 			&publisherID, &publisherName, &publisherFullname, &publisherDescription,
+			&bindingID, &bindingName,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan edition"})
@@ -191,6 +195,16 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 			edition.Publisher = nil
 		}
 
+		// Create binding object if binding data exists
+		if bindingID.Valid && bindingName.Valid {
+			edition.Binding = &models.Binding{
+				ID:   int(bindingID.Int64),
+				Name: bindingName.String,
+			}
+		} else {
+			edition.Binding = nil
+		}
+
 		editions = append(editions, edition)
 	}
 
@@ -217,25 +231,29 @@ func (h *EditionHandler) GetEdition(c *gin.Context) {
 	var edition models.Edition
 	var eTitle, eSubtitle, isbn, printedIn, pubSeriesNum, collInfo sql.NullString
 	var misc, importedString, publisherName, publisherFullname, publisherDescription sql.NullString
+	var bindingName sql.NullString
 	var workID, pubYear, version, pages, size, dustCover, coverImage sql.NullInt64
 	var editionNum int64
-	var publisherID sql.NullInt64
+	var publisherID, bindingID sql.NullInt64
 	var verified sql.NullBool
 
 	query := `
 		SELECT e.id, pt.work_id, e.title, e.subtitle, e.pubyear, e.editionnum, e.version, e.isbn,
 		       e.printedin, e.pubseriesnum, e.coll_info, e.pages, e.size, e.dustcover,
 		       e.coverimage, e.misc, e.imported_string, e.verified,
-		       e.publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description
+		       e.publisher_id, p.name as publisher_name, p.fullname as publisher_fullname, p.description as publisher_description,
+		       bt.id as binding_id, bt.name as binding_name
 		FROM suomisf.edition e
 		LEFT JOIN suomisf.part pt ON e.id = pt.edition_id
 		LEFT JOIN suomisf.publisher p ON e.publisher_id = p.id
+		LEFT JOIN suomisf.bindingtype bt ON e.binding_id = bt.id
 		WHERE e.id = $1`
 
 	err = h.db.QueryRow(query, editionID).Scan(
 		&edition.ID, &workID, &eTitle, &eSubtitle, &pubYear, &editionNum, &version,
 		&isbn, &printedIn, &pubSeriesNum, &collInfo, &pages, &size, &dustCover,
 		&coverImage, &misc, &importedString, &verified, &publisherID, &publisherName, &publisherFullname, &publisherDescription,
+		&bindingID, &bindingName,
 	)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Edition not found"})
@@ -332,6 +350,16 @@ func (h *EditionHandler) GetEdition(c *gin.Context) {
 		edition.Publisher = &publisher
 	} else {
 		edition.Publisher = nil
+	}
+
+	// Create binding object if binding data exists
+	if bindingID.Valid && bindingName.Valid {
+		edition.Binding = &models.Binding{
+			ID:   int(bindingID.Int64),
+			Name: bindingName.String,
+		}
+	} else {
+		edition.Binding = nil
 	}
 
 	c.JSON(http.StatusOK, edition)

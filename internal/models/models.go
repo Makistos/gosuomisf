@@ -123,6 +123,12 @@ type Role struct {
 	Name string `json:"name" db:"name"`
 }
 
+// Binding represents a book binding type
+type Binding struct {
+	ID   int    `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 // Contributor represents a person's contribution to a work/edition
 type Contributor struct {
 	Person      PersonSummary  `json:"person"`
@@ -151,6 +157,7 @@ type Edition struct {
 	Misc           *string                  `json:"misc,omitempty" db:"misc"`
 	ImportedString *string                  `json:"imported_string,omitempty" db:"imported_string"`
 	Verified       *bool                    `json:"verified,omitempty" db:"verified"`
+	Binding        *Binding                 `json:"binding,omitempty"`
 	Publisher      *map[string]interface{}  `json:"publisher"`
 	Images         []map[string]interface{} `json:"images"`
 	Owners         []map[string]interface{} `json:"owners"`
