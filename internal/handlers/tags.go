@@ -896,8 +896,11 @@ func (h *TagHandler) getEditionsForWork(workID int) []map[string]interface{} {
 		if pubyear.Valid {
 			edition["pubyear"] = int(pubyear.Int64)
 		}
-		if editionnum.Valid {
+		// EditionNum should always have a value, default to 1 if not valid or 0
+		if editionnum.Valid && editionnum.Int64 > 0 {
 			edition["editionnum"] = int(editionnum.Int64)
+		} else {
+			edition["editionnum"] = 1
 		}
 		if version.Valid {
 			edition["version"] = int(version.Int64)
