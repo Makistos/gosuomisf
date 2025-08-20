@@ -130,9 +130,19 @@ func TestTagHandler_Integration_VerifyDataConsistency(t *testing.T) {
 				// Check editions structure if present
 				if editions, ok := work["editions"].([]interface{}); ok && len(editions) > 0 {
 					edition := editions[0].(map[string]interface{})
-					editionRequiredFields := []string{"id", "title", "contributions", "translators", "images"}
+					editionRequiredFields := []string{"id", "title", "contributions", "images"}
 					for _, field := range editionRequiredFields {
 						assert.Contains(t, edition, field, fmt.Sprintf("Work %d edition missing field %s", i, field))
+					}
+					
+					// Verify contributions is an array
+					if contributions, ok := edition["contributions"].([]interface{}); ok {
+						for _, contrib := range contributions {
+							contribution := contrib.(map[string]interface{})
+							// Verify contribution structure
+							assert.Contains(t, contribution, "person", "Contribution should have person field")
+							assert.Contains(t, contribution, "role", "Contribution should have role field")
+						}
 					}
 				}
 			}
