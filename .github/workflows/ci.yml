@@ -34,11 +34,17 @@ jobs:
         go mod download
         go mod verify
 
+    - name: Install PostgreSQL client tools
+      run: |
+        apt-get update
+        apt-get install -y postgresql-client
+
     - name: Wait for PostgreSQL
       run: |
         while ! pg_isready -h 127.0.0.1 -p 5432 -U postgres; do
           sleep 1
         done
+        echo "PostgreSQL is ready!"
 
     - name: Set up test database
       run: |

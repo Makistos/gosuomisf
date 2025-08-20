@@ -196,7 +196,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 
 	var work models.Work
 	// Initialize the new fields as empty slices
-	work.Genres = []map[string]interface{}{}
+	work.Genres = []models.Genre{}
 	work.Tags = []models.Tag{}
 	work.Links = []map[string]interface{}{}
 	work.Awards = []map[string]interface{}{}
@@ -355,9 +355,10 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 				year := int(pubYear.Int64)
 				edition.PubYear = &year
 			}
-			// EditionNum should always have a value, default to 1 if 0
-			if editionNum == 0 {
-				editionNum = 1
+			// EditionNum must be valid and greater than 0
+			if editionNum <= 0 {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid edition number in database"})
+				return
 			}
 			num := int(editionNum)
 			edition.EditionNum = &num
@@ -674,7 +675,7 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 	}
 
 	// Query work genres
-	work.Genres = []map[string]interface{}{} // Initialize as empty slice
+	work.Genres = []models.Genre{} // Initialize as empty slice
 	genresQuery := `
 		SELECT g.id, g.name, g.abbr
 		FROM suomisf.genre g
@@ -686,22 +687,21 @@ func (h *WorkHandler) GetWork(c *gin.Context) {
 	if err == nil {
 		defer genresRows.Close()
 		for genresRows.Next() {
-			var genreID int
+			var genre models.Genre
 			var genreName, genreAbbr sql.NullString
 
-			err := genresRows.Scan(&genreID, &genreName, &genreAbbr)
+			err := genresRows.Scan(&genre.ID, &genreName, &genreAbbr)
 			if err != nil {
 				continue // Skip this genre if there's an error
 			}
 
-			genre := map[string]interface{}{
-				"id":   genreID,
-				"name": genreName.String,
+			if genreName.Valid {
+				genre.Name = genreName.String
 			}
 			if genreAbbr.Valid {
-				genre["abbr"] = genreAbbr.String
+				genre.Abbreviation = genreAbbr.String
 			} else {
-				genre["abbr"] = nil
+				genre.Abbreviation = ""
 			}
 
 			work.Genres = append(work.Genres, genre)

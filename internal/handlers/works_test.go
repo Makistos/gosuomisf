@@ -272,9 +272,9 @@ func TestGetWorkGenres(t *testing.T) {
 
 		// Genres can be empty, but should be an initialized slice
 		for _, genre := range work.Genres {
-			assert.Contains(t, genre, "id")
-			assert.Contains(t, genre, "name")
-			// abbr can be nil, so we don't require it
+			assert.Greater(t, genre.ID, 0)
+			assert.NotEmpty(t, genre.Name)
+			// Abbreviation can be empty, so we don't require it
 		}
 	}
 }

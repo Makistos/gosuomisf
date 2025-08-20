@@ -117,9 +117,10 @@ func (h *EditionHandler) GetEditions(c *gin.Context) {
 			year := int(pubYear.Int64)
 			edition.PubYear = &year
 		}
-		// EditionNum should always have a value, default to 1 if 0
-		if editionNum == 0 {
-			editionNum = 1
+		// EditionNum must be valid and greater than 0
+		if editionNum <= 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid edition number in database"})
+			return
 		}
 		num := int(editionNum)
 		edition.EditionNum = &num
@@ -256,9 +257,10 @@ func (h *EditionHandler) GetEdition(c *gin.Context) {
 		year := int(pubYear.Int64)
 		edition.PubYear = &year
 	}
-	// EditionNum should always have a value, default to 1 if 0
-	if editionNum == 0 {
-		editionNum = 1
+	// EditionNum must be valid and greater than 0
+	if editionNum <= 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid edition number in database"})
+		return
 	}
 	num := int(editionNum)
 	edition.EditionNum = &num

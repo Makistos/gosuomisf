@@ -39,6 +39,13 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+type Genre struct {
+	ID           int    `json:"id" db:"id"`
+	Name         string `json:"name" db:"name"`
+	Abbreviation string `json:"abbr" db:"abbr"`
+	Works        []Work `json:"works"`
+}
+
 // Work represents a literary work
 type Work struct {
 	ID              int                      `json:"id" db:"id"`
@@ -65,7 +72,7 @@ type Work struct {
 	Stories         []map[string]interface{} `json:"stories"`
 	Editions        []Edition                `json:"editions,omitempty"`
 	Contributions   []map[string]interface{} `json:"contributions,omitempty"`
-	Genres          []map[string]interface{} `json:"genres"`
+	Genres          []Genre                  `json:"genres"`
 	Tags            []Tag                    `json:"tags"`
 	Links           []map[string]interface{} `json:"links"`
 }
